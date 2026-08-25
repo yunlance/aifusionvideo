@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: aifusionvideo-mysql
+    restart: unless-stopped
+    ports:
+      - "43306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: aifusionvideo
+      MYSQL_USER: fusion
+      MYSQL_PASSWORD: 123456
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    container_name: aifusionvideo-redis
+    restart: unless-stopped
+    ports:
+      - "46379:6379"
+    command: redis-server --requirepass 123456
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mysql_data:
+  redis_data:

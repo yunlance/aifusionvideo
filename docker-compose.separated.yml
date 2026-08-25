@@ -1,0 +1,18 @@
+# 前后端分域部署覆盖文件。
+# 与 docker-compose.yml 组合使用；Nginx 统一入口不会启动。
+services:
+  backend:
+    ports:
+      - "${BACKEND_PORT:-15858}:15858"
+    environment:
+      CORS_ALLOWED_ORIGIN_PATTERNS: "${CORS_ALLOWED_ORIGIN_PATTERNS:-*}"
+
+  frontend:
+    ports:
+      - "${FRONTEND_PORT:-5000}:5000"
+    environment:
+      PUBLIC_API_URL: "${PUBLIC_API_URL:?请配置后端公网地址，例如 https://api.example.com}"
+
+  nginx:
+    profiles:
+      - unified-gateway

@@ -1,0 +1,15 @@
+{
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.compile.nullAnalysis.mode": "automatic",
+  "npm.packageManager": "pnpm",
+  "java.debug.settings.onBuildFailureProceed": true,
+  "npm.exclude": [
+    "**/yunlan-video-webui/.next/**"
+  ],
+  "files.exclude": {
+    "**/yunlan-video-webui/.next": true
+  },
+  "search.exclude": {
+    "**/yunlan-video-webui/.next": true
+  }
+}

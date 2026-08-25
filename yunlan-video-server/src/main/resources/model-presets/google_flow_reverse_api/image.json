@@ -1,0 +1,120 @@
+[
+  {
+    "code": "gemini-2.5-flash-image",
+    "name": "Gemini 2.5 Flash Image",
+    "platform": "GoogleFlowReverseApi",
+    "modelType": 2,
+    "description": "Flow2API 图片别名模型，内部按比例映射到 Gemini 2.5 Flash 的具体生图型号",
+    "config": {
+      "supportReferenceImages": true,
+      "referenceImageInputFormats": ["data_uri"],
+      "minReferenceImages": 0,
+      "defaultWidth": 1792,
+      "defaultHeight": 1024,
+      "supportedAspectRatios": ["16:9", "9:16"],
+      "supportedSizes": {
+        "1K": {
+          "16:9": "1792x1024",
+          "9:16": "1024x1792"
+        }
+      }
+    }
+  },
+  {
+    "code": "gemini-3.0-pro-image",
+    "name": "Gemini 3.0 Pro Image",
+    "platform": "GoogleFlowReverseApi",
+    "modelType": 2,
+    "description": "Flow2API 图片别名模型，支持先选模型，再选比例与 1K / 2K / 4K 输出档位",
+    "config": {
+      "supportReferenceImages": true,
+      "referenceImageInputFormats": ["data_uri"],
+      "minReferenceImages": 0,
+      "defaultWidth": 1792,
+      "defaultHeight": 1024,
+      "supportedAspectRatios": ["16:9", "9:16", "1:1", "4:3", "3:4"],
+      "supportedSizes": {
+        "1K": {
+          "16:9": "1792x1024",
+          "9:16": "1024x1792",
+          "1:1": "1024x1024",
+          "4:3": "1536x1152",
+          "3:4": "1152x1536"
+        },
+        "2K": {
+          "16:9": "2048x1152",
+          "9:16": "1152x2048",
+          "1:1": "2048x2048",
+          "4:3": "2048x1536",
+          "3:4": "1536x2048"
+        },
+        "4K": {
+          "16:9": "4096x2304",
+          "9:16": "2304x4096",
+          "1:1": "4096x4096",
+          "4:3": "4096x3072",
+          "3:4": "3072x4096"
+        }
+      }
+    }
+  },
+  {
+    "code": "gemini-3.1-flash-image",
+    "name": "Gemini 3.1 Flash Image",
+    "platform": "GoogleFlowReverseApi",
+    "modelType": 2,
+    "description": "Flow2API 图片别名模型，支持更多比例与 2K / 4K 放大档位",
+    "config": {
+      "supportReferenceImages": true,
+      "referenceImageInputFormats": ["data_uri"],
+      "minReferenceImages": 0,
+      "defaultWidth": 1792,
+      "defaultHeight": 1024,
+      "supportedAspectRatios": ["16:9", "9:16", "1:1", "4:3", "3:4"],
+      "supportedSizes": {
+        "1K": {
+          "16:9": "1792x1024",
+          "9:16": "1024x1792",
+          "1:1": "1024x1024",
+          "4:3": "1536x1152",
+          "3:4": "1152x1536"
+        },
+        "2K": {
+          "16:9": "2048x1152",
+          "9:16": "1152x2048",
+          "1:1": "2048x2048",
+          "4:3": "2048x1536",
+          "3:4": "1536x2048"
+        },
+        "4K": {
+          "16:9": "4096x2304",
+          "9:16": "2304x4096",
+          "1:1": "4096x4096",
+          "4:3": "4096x3072",
+          "3:4": "3072x4096"
+        }
+      }
+    }
+  },
+  {
+    "code": "imagen-4.0-generate-preview",
+    "name": "Imagen 4.0 Generate Preview",
+    "platform": "GoogleFlowReverseApi",
+    "modelType": 2,
+    "description": "Flow2API Imagen 4.0 图片别名模型，仅支持 1K 横屏 / 竖屏输出",
+    "config": {
+      "supportReferenceImages": true,
+      "referenceImageInputFormats": ["data_uri"],
+      "minReferenceImages": 0,
+      "defaultWidth": 1792,
+      "defaultHeight": 1024,
+      "supportedAspectRatios": ["16:9", "9:16"],
+      "supportedSizes": {
+        "1K": {
+          "16:9": "1792x1024",
+          "9:16": "1024x1792"
+        }
+      }
+    }
+  }
+]

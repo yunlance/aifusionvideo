@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500" role="img" aria-labelledby="title desc">
+  <title id="title">云揽镜助手 Logo</title>
+  <desc id="desc">三片相隔一百二十度并循环覆盖的渐变叶片组成圆形莫比乌斯对话气泡，构造圆交集形成白色鲁洛克斯三角形面部，并配有带高光的蓝色眼睛。</desc>
+
+  <defs>
+    <radialGradient id="background" cx="250" cy="214.912" r="390.75" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fffaf2"/>
+      <stop offset="0.58" stop-color="#fef9ef"/>
+      <stop offset="1" stop-color="#fcf7eb"/>
+    </radialGradient>
+    <linearGradient id="topLeaf" x1="139.553" y1="103.668" x2="287.081" y2="390.75" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#78afff"/>
+      <stop offset="0.5" stop-color="#5c93f5"/>
+      <stop offset="1" stop-color="#447ae5"/>
+    </linearGradient>
+    <linearGradient id="darkLeaf" x1="358.852" y1="187.4" x2="231.26" y2="386.762" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0291b1"/>
+      <stop offset="0.5" stop-color="#0589ad"/>
+      <stop offset="1" stop-color="#0879a1"/>
+    </linearGradient>
+    <linearGradient id="coralLeaf" x1="211.324" y1="91.707" x2="402.711" y2="311.005" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff8a6a"/>
+      <stop offset="0.5" stop-color="#fe8467"/>
+      <stop offset="1" stop-color="#fc8165"/>
+    </linearGradient>
+    <linearGradient id="coralSeam" x1="356.698" y1="130.979" x2="262.474" y2="406.375" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff8a6a"/>
+      <stop offset="0.5" stop-color="#fe8467"/>
+      <stop offset="1" stop-color="#fc8165"/>
+    </linearGradient>
+    <linearGradient id="tailGradient" x1="127.592" y1="318.979" x2="96.093" y2="386.762" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0291b1"/>
+      <stop offset="0.55" stop-color="#0291b1"/>
+      <stop offset="0.8" stop-color="#159bb3"/>
+      <stop offset="1" stop-color="#27b3c7"/>
+    </linearGradient>
+    <clipPath id="outerCircle" clipPathUnits="userSpaceOnUse">
+      <circle cx="250" cy="237.241" r="153.907"/>
+    </clipPath>
+    <path id="leaf" fill-rule="evenodd" clip-rule="evenodd" d="M250 83.333 A153.907 153.907 0 1 1 250 391.148 A153.907 153.907 0 1 1 250 83.333Z M250 154.723 A130.365 130.365 0 1 1 250 415.453 A130.365 130.365 0 1 1 250 154.723Z"/>
+    <path id="leafClipExpanded" fill-rule="evenodd" clip-rule="evenodd" d="M250 83.134 A154.107 154.107 0 1 1 250 391.348 A154.107 154.107 0 1 1 250 83.134Z M250 154.922 A130.166 130.166 0 1 1 250 415.253 A130.166 130.166 0 1 1 250 154.922Z"/>
+    <circle id="faceConstructionCircle" cx="250" cy="285.088" r="130.365"/>
+    <circle id="darkConstructionCircle" cx="250" cy="189.394" r="130.365"/>
+    <clipPath id="faceCoralCircle" clipPathUnits="userSpaceOnUse">
+      <use href="#faceConstructionCircle" transform="rotate(60 250 237.241)"/>
+    </clipPath>
+    <clipPath id="faceDarkCircle" clipPathUnits="userSpaceOnUse">
+      <use href="#faceConstructionCircle" transform="rotate(180 250 237.241)"/>
+    </clipPath>
+    <clipPath id="faceTopCircle" clipPathUnits="userSpaceOnUse">
+      <use href="#faceConstructionCircle" transform="rotate(300 250 237.241)"/>
+    </clipPath>
+    <clipPath id="coralLeafClip" clipPathUnits="userSpaceOnUse">
+      <use href="#leafClipExpanded" transform="rotate(60 250 237.241)"/>
+    </clipPath>
+    <clipPath id="darkLeafClip" clipPathUnits="userSpaceOnUse">
+      <use href="#leafClipExpanded" transform="rotate(180 250 237.241)"/>
+    </clipPath>
+    <clipPath id="topLeafClip" clipPathUnits="userSpaceOnUse">
+      <use href="#leafClipExpanded" transform="rotate(300 250 237.241)"/>
+    </clipPath>
+    <clipPath id="upperRightOverlap" clipPathUnits="userSpaceOnUse">
+      <rect x="250" y="0" width="250" height="237.241"/>
+    </clipPath>
+    <clipPath id="upperLeftOverlap" clipPathUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="250" height="237.241"/>
+    </clipPath>
+    <clipPath id="rightHalf" clipPathUnits="userSpaceOnUse">
+      <rect x="250" y="0" width="250" height="500"/>
+    </clipPath>
+    <mask id="outsideTopLeaf" x="0" y="0" width="500" height="500" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" style="mask-type:luminance">
+      <rect width="500" height="500" fill="white"/>
+      <use href="#leaf" transform="rotate(300 250 237.241)" fill="black"/>
+    </mask>
+  </defs>
+
+  <path d="M129.585 271.132 C125.598 297.049 123.604 338.915 99.681 375.598 C96.89 378.389 96.093 381.18 97.289 383.971 C98.884 388.357 105.662 390.351 113.238 390.351 C145.534 391.148 177.432 389.952 207.337 381.18 C187.4 338.915 159.49 295.056 129.585 271.132Z" fill="url(#tailGradient)"/>
+
+  <g clip-path="url(#faceCoralCircle)">
+    <g clip-path="url(#faceDarkCircle)">
+      <g clip-path="url(#faceTopCircle)">
+        <rect width="500" height="500" fill="#ffffff"/>
+      </g>
+    </g>
+  </g>
+
+  <g clip-path="url(#outerCircle)">
+    <use href="#leaf" transform="rotate(60 250 237.241)" fill="url(#coralLeaf)"/>
+    <use href="#leaf" transform="rotate(300 250 237.241)" fill="url(#topLeaf)"/>
+    <use href="#leaf" transform="rotate(180 250 237.241)" fill="url(#darkLeaf)"/>
+    <g clip-path="url(#coralLeafClip)">
+      <g clip-path="url(#darkLeafClip)">
+        <use href="#leaf" transform="rotate(60 250 237.241)" fill="url(#coralLeaf)"/>
+      </g>
+    </g>
+    <!-- Repair the coral clip fringe before restoring the cyclic top layers. -->
+    <g clip-path="url(#coralLeafClip)" mask="url(#outsideTopLeaf)">
+      <g clip-path="url(#rightHalf)">
+        <use href="#darkConstructionCircle" fill="none" stroke="url(#coralSeam)" stroke-width="12.759"/>
+      </g>
+    </g>
+    <g clip-path="url(#coralLeafClip)">
+      <g clip-path="url(#darkLeafClip)">
+        <g clip-path="url(#topLeafClip)">
+          <g clip-path="url(#upperRightOverlap)">
+            <use href="#leaf" transform="rotate(300 250 237.241)" fill="url(#topLeaf)"/>
+          </g>
+          <g clip-path="url(#upperLeftOverlap)">
+            <use href="#leaf" transform="rotate(180 250 237.241)" fill="url(#darkLeaf)"/>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <ellipse cx="222.488" cy="235.646" rx="21.531" ry="32.695" fill="#447ae5"/>
+  <ellipse cx="286.284" cy="235.646" rx="21.531" ry="32.695" fill="#447ae5"/>
+  <ellipse cx="215.311" cy="222.488" rx="5.183" ry="7.177" fill="#ffffff" fill-opacity="0.95"/>
+  <ellipse cx="279.107" cy="222.488" rx="5.183" ry="7.177" fill="#ffffff" fill-opacity="0.95"/>
+</svg>

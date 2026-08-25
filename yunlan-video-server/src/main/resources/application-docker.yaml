@@ -1,0 +1,34 @@
+spring:
+  # MySQL
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:mysql}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:aifusionvideo}?useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:123456}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # Redis
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:123456}
+      database: 0
+      connect-timeout: ${REDIS_CONNECT_TIMEOUT:2s}
+      timeout: ${REDIS_COMMAND_TIMEOUT:2s}
+
+  # Spring AI - DashScope
+  ai:
+    dashscope:
+      api-key: ${AI_DASHSCOPE_API_KEY:sk-placeholder}
+
+# 日志级别
+logging:
+  level:
+    com.stonewu.fusion: INFO
+
+fusion:
+  agentscope:
+    v2:
+      state:
+        mode: mysql
+        database-name: ${MYSQL_DATABASE:aifusionvideo}

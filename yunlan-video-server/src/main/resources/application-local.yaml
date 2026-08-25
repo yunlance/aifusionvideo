@@ -1,0 +1,64 @@
+spring:
+  # MySQL
+  datasource:
+    url: jdbc:mysql://localhost:43306/aifusionvideo?useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # Flyway
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  # Redis
+  data:
+    redis:
+      host: localhost
+      port: 46379
+      password: 123456
+      database: 0
+      connect-timeout: 2s
+      timeout: 3s
+
+  # Spring AI - DashScope
+  ai:
+    dashscope:
+      api-key: ${AI_DASHSCOPE_API_KEY:sk-placeholder}
+
+  lifecycle:
+    timeout-per-shutdown-phase: 5s
+
+server:
+  shutdown: immediate
+
+fusion:
+  agentscope:
+    shutdown-timeout: 3s
+    v2:
+      state:
+        mode: mysql
+
+# 视频合成并发数（默认按 CPU 核心数自动计算，取消注释可手动覆盖）
+# app:
+#   video-compose:
+#     max-concurrent: 2
+
+app:
+  cors:
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:*}
+
+video:
+  compose:
+    # 本地未加入 PATH 时，可直接改成绝对路径，例如 C:/ffmpeg/bin/ffmpeg.exe
+    ffmpeg-path: ${VIDEO_COMPOSE_FFMPEG_PATH:D:\ffmpeg-7.1.1-full_build\bin\ffmpeg.exe}
+    ffprobe-path: ${VIDEO_COMPOSE_FFPROBE_PATH:D:\ffmpeg-7.1.1-full_build\bin\ffprobe.exe}
+
+# 日志级别（本地开发调高）
+logging:
+  level:
+    com.stonewu.fusion: DEBUG
+    org.springframework.ai: DEBUG
+    # 需要关闭 SQL 日志时打开下面这行
+    com.stonewu.fusion.mapper: INFO

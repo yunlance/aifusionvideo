@@ -1,0 +1,15 @@
+{
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot-FusionVideoApplication<ai-fusion-video>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "com.stonewu.fusion.FusionVideoApplication",
+      "projectName": "ai-fusion-video",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal"
+    }
+  ]
+}
