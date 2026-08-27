@@ -1,7 +1,7 @@
 spring:
   # MySQL
   datasource:
-    url: jdbc:mysql://localhost:43306/aifusionvideo?useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:53306/aifusionvideo?useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -16,7 +16,7 @@ spring:
   data:
     redis:
       host: localhost
-      port: 46379
+      port: 56379
       password: 123456
       database: 0
       connect-timeout: 2s
@@ -51,9 +51,9 @@ app:
 
 video:
   compose:
-    # 本地未加入 PATH 时，可直接改成绝对路径，例如 C:/ffmpeg/bin/ffmpeg.exe
-    ffmpeg-path: ${VIDEO_COMPOSE_FFMPEG_PATH:D:\ffmpeg-7.1.1-full_build\bin\ffmpeg.exe}
-    ffprobe-path: ${VIDEO_COMPOSE_FFPROBE_PATH:D:\ffmpeg-7.1.1-full_build\bin\ffprobe.exe}
+    # 本地未加入 PATH 时，可通过环境变量指定绝对路径
+    ffmpeg-path: ${VIDEO_COMPOSE_FFMPEG_PATH:ffmpeg}
+    ffprobe-path: ${VIDEO_COMPOSE_FFPROBE_PATH:ffprobe}
 
 # 日志级别（本地开发调高）
 logging:

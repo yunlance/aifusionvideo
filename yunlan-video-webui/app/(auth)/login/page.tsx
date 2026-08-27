@@ -17,9 +17,8 @@ function LoginContent() {
   const redirectUrl = searchParams.get("redirect") || "/dashboard";
   const login = useAuthStore((s) => s.login);
 
-  const isDev = process.env.NODE_ENV === "development";
-  const [username, setUsername] = useState(isDev ? "admin" : "");
-  const [password, setPassword] = useState(isDev ? "123456" : "");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);

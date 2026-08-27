@@ -60,7 +60,7 @@
 
 AI Fusion Video is an Agent-driven platform for video creators. It brings projects, scripts, storyboards, assets, and image and video generation into one workspace. Creators can organize scripts by episode and scene, break them down into storyboards, refine individual shots, and generate and manage the assets needed for production.
 
-This repository includes a Java backend, a Next.js frontend, and Docker Compose deployment files. After the first launch, follow the setup wizard to create an administrator account and start using the platform.
+This repository includes a Java backend, a Next.js frontend, and Docker Compose deployment files. After the first installation, open the site and sign in as `admin`. Cloud models use the built-in Yunlan Chuan gateway, with local ComfyUI as an optional generation channel.
 
 ## Features
 
@@ -72,8 +72,8 @@ This repository includes a Java backend, a Next.js frontend, and Docker Compose 
 | Image and video generation | Generate images and video from text or reference assets while tracking background job progress |
 | Asset management | Organize project assets and reusable image and video resources |
 | Agent workspace | Use streaming chat, multimodal context, tool permissions, Skills, MCP, and sub-Agents |
-| Models and storage | Configure text, image, and video models centrally, with local or object storage |
-| System administration | Use the setup wizard, manage users and roles, reset passwords, and check for updates |
+| Models and storage | Enter a Yunlan Chuan API key in Settings, or connect a local ComfyUI workflow; media can use local disk or object storage |
+| System administration | Manage users and roles, reset passwords, and check for updates |
 
 ### Agents and tools
 
@@ -83,9 +83,9 @@ Agents run on AgentScope with support for Skills, MCP, and sub-Agents. Conversat
 
 ### Model and generation protocols
 
-Manage models and API connections centrally from Settings without writing secrets into the source code. Chat and Agents support OpenAI-compatible APIs, Anthropic, Gemini, DashScope, Ollama, and other model services. Image and video generation can connect to multiple services, with models selected in projects according to their capabilities.
+Enter models and API keys in Settings; they are not stored in source code. Cloud chat, image, and video calls go through the built-in **Yunlan Chuan** gateway. Local **ComfyUI** workflows can be configured as a second generation channel. The UI does not allow adding third-party cloud providers such as OpenAI, Anthropic, or Gemini.
 
-Model availability depends on your provider account, endpoint, and permissions.
+After startup, open `Settings > AI Models` and fill in the Yunlan Chuan API key. Available models depend on your gateway account and permissions.
 
 ### Storage
 
@@ -94,6 +94,8 @@ Media assets can be stored on local disk or in an S3-compatible object store. Ag
 ## UI demos
 
 https://github.com/user-attachments/assets/fe71cbb8-f9d9-4351-9a4c-cb8a0a6af7ba
+
+https://github.com/user-attachments/assets/24d9443b-e463-405c-8ada-108236b4d6c2
 
 https://github.com/user-attachments/assets/2f1de26c-5cd5-4be3-ad2e-81be2edd6956
 
@@ -113,11 +115,11 @@ https://github.com/user-attachments/assets/be99d4c1-dc09-4616-8fba-06cb959c84c8
 | Media | FFmpeg, FFprobe, local storage or an S3-compatible object store |
 | Deployment | Docker Compose, Nginx |
 
-## Quick deployment
+## First-time installation
 
 ### Docker Compose
 
-Docker Compose is the recommended deployment method. With Docker Engine and Docker Compose installed, run:
+Docker Compose is recommended for the first installation. With Docker Engine and Docker Compose installed, run:
 
 ```bash
 git clone https://github.com/yunlance/aifusionvideo.git
@@ -125,19 +127,21 @@ cd aifusionvideo
 
 cp .env.example .env
 
-docker compose up -d --build
+docker compose up -d
 ```
 
-To customize ports, passwords, or the deployment mode, create a root `.env` based on `.env.example`. Git ignores this file, so project updates do not require changes to `docker-compose.yml`.
+The first run builds the images automatically and starts MySQL, Redis, the backend, the frontend, and Nginx. You do not need `--build`.
 
-When startup completes, open <http://localhost:5858> and follow the prompts to create an administrator account. To check the services or follow the backend logs, run:
+To customize ports or passwords, edit the root `.env` file. Git ignores this file, so later project updates do not require changes to `docker-compose.yml`. Set `ADMIN_PASSWORD` in `.env` before the first launch.
+
+When startup completes, open <http://localhost:5858> and sign in as `admin` with the `ADMIN_PASSWORD` from `.env`. To check the services or follow the backend logs, run:
 
 ```bash
 docker compose ps
 docker compose logs -f backend
 ```
 
-By default, Compose starts MySQL, Redis, the backend, the frontend, and Nginx. Nginx provides a single entry point and forwards `/api/**` and `/media/**` requests to the backend. Before a public deployment, update the default database and Redis passwords in `.env`.
+Nginx provides a single entry point and forwards `/api/**` and `/media/**` requests to the backend. Before a public deployment, update the default database password, Redis password, and `ADMIN_PASSWORD` in `.env`.
 
 ### Separate frontend and backend deployment
 
@@ -153,7 +157,7 @@ BACKEND_PORT=15858
 Set `PUBLIC_API_URL` to the backend root URL without a trailing `/api`. The backend allows cross-origin requests globally by default. In production, restrict `CORS_ALLOWED_ORIGIN_PATTERNS` to the actual frontend origins as shown above; separate multiple origins with commas.
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.separated.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.separated.yml up -d
 ```
 
 Separate frontend and backend deployment leaves the repository's built-in Nginx service disabled. Configure an HTTPS reverse proxy for each service, then open `Settings > General` and confirm the site public URL and backend resource public URL.
@@ -202,8 +206,8 @@ DEV_BACKEND_URL=http://localhost:15858
 | Frontend | <http://localhost:5000> |
 | Backend | <http://localhost:15858> |
 | Swagger UI | <http://localhost:15858/swagger-ui.html> |
-| MySQL | `localhost:43306` |
-| Redis | `localhost:46379` |
+| MySQL | `localhost:53306` |
+| Redis | `localhost:56379` |
 
 ## Configuration
 
@@ -213,10 +217,10 @@ Docker Compose automatically reads `.env` from the repository root. Each startup
 
 | Deployment mode | Compose files | Variables to review |
 | --- | --- | --- |
-| Default unified gateway | `docker-compose.yml` | Review the MySQL root password and Redis password; application credentials are optional; change `MYSQL_DATABASE`, `APP_PORT`, `JAVA_OPTS`, or the CORS allowlist only when needed; keep `PUBLIC_API_URL` empty |
+| Default unified gateway | `docker-compose.yml` | Review the MySQL root password, Redis password, and `ADMIN_PASSWORD`; application credentials are optional; change `MYSQL_DATABASE`, `APP_PORT`, `JAVA_OPTS`, or the CORS allowlist only when needed; keep `PUBLIC_API_URL` empty |
 | Separate frontend and backend | Base Compose file + `docker-compose.separated.yml` | Set `PUBLIC_API_URL`; setting `CORS_ALLOWED_ORIGIN_PATTERNS` is recommended in production; change `FRONTEND_PORT` and `BACKEND_PORT` when needed; `APP_PORT` is not used |
 
-Change the MySQL root password and Redis password before any public deployment. If a MySQL application account is enabled, give it a separate password as well. `FRONTEND_PORT`, `BACKEND_PORT`, and `PUBLIC_API_URL` only take effect when `docker-compose.separated.yml` is included; `CORS_ALLOWED_ORIGIN_PATTERNS` applies to every deployment mode.
+Change the MySQL root password, Redis password, and `ADMIN_PASSWORD` before any public deployment. If a MySQL application account is enabled, give it a separate password as well. `FRONTEND_PORT`, `BACKEND_PORT`, and `PUBLIC_API_URL` only take effect when `docker-compose.separated.yml` is included; `CORS_ALLOWED_ORIGIN_PATTERNS` applies to every deployment mode.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -231,12 +235,13 @@ Change the MySQL root password and Redis password before any public deployment. 
 | `JAVA_OPTS` | `-Xms512m -Xmx1024m` | Backend JVM options; normally do not need to be changed |
 | `MYSQL_USERNAME` | Empty | Optional MySQL application account; must not be set to `root`; leaving it empty preserves root access |
 | `MYSQL_PASSWORD` | Empty | Optional MySQL application password; must be configured together with `MYSQL_USERNAME` |
+| `ADMIN_PASSWORD` | Empty | Password for the `admin` account created on first startup; set it before a public deployment. Leaving it empty uses a built-in default hash |
 
 Keep `PUBLIC_API_URL` empty when you use the unified gateway. `CORS_ALLOWED_ORIGIN_PATTERNS` may remain `*` or be restricted to the site's actual origin.
 
 `MYSQL_USERNAME` and `MYSQL_PASSWORD` must either both be set or both remain empty. When `.env.example` is copied as-is, both variables are empty and the backend continues using `root` with `MYSQL_ROOT_PASSWORD`, matching the historical default. For a new database, setting both variables before the first startup makes MySQL create the regular account and grant it access to `MYSQL_DATABASE`. To move an existing database to a regular account, create and grant the user in MySQL before setting these variables; changing `.env` does not modify existing database accounts.
 
-The MySQL port is published to `127.0.0.1:43306` by default, so local tools such as Navicat can connect directly. The Redis port is not published by default; to expose it, uncomment the corresponding `ports` entry in the Compose file (for example, `127.0.0.1:46379`).
+The MySQL port is published to `127.0.0.1:53306` by default, so local tools such as Navicat can connect directly. The Redis port is not published by default; to expose it, uncomment the corresponding `ports` entry in the Compose file (for example, `127.0.0.1:46379`).
 
 ### Public resource URLs
 
@@ -285,8 +290,8 @@ Issue reports, feature suggestions, and code improvements are welcome. For featu
 1. Fork this repository and clone your fork, then add this repository as `upstream`:
 
    ```bash
-   git clone https://github.com/YOUR-USERNAME/yunlan-video-server.git
-   cd yunlan-video-server
+   git clone https://github.com/YOUR-USERNAME/aifusionvideo.git
+   cd aifusionvideo
    git remote add upstream https://github.com/yunlance/aifusionvideo.git
    ```
 

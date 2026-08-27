@@ -60,7 +60,7 @@
 
 云揽镜是一款面向视频创作者的 Agent 驱动创作平台，将项目、剧本、分镜、素材以及图片与视频生成整合在统一工作区。创作者可以按分集和场景组织剧本、拆解与调整分镜，并围绕每个镜头完成素材生成和管理。
 
-本仓库包含 Java 后端、Next.js 前端和 Docker Compose 部署配置。首次启动后，按照初始化向导创建管理员账号即可开始使用。
+本仓库包含 Java 后端、Next.js 前端和 Docker Compose 部署配置。首次安装后访问页面，使用 `admin` 登录即可开始使用。云端模型默认走云揽川聚合网关，本地 ComfyUI 作为可选生成通道。
 
 ## 功能
 
@@ -72,8 +72,8 @@
 | 图片与视频 | 根据文本或参考素材生成图片与视频，并持续跟踪后台任务进度 |
 | 素材管理 | 统一管理项目素材和可复用的图片、视频资源 |
 | Agent 工作区 | 支持流式对话、多模态上下文、工具权限、Skill、MCP 与子 Agent |
-| 模型与存储 | 集中配置文本、图片和视频模型，并选择本地或对象存储 |
-| 系统管理 | 提供初始化向导、用户与角色管理、密码重置和版本检查 |
+| 模型与存储 | 在设置页填写云揽川 Key，或接入本地 ComfyUI 工作流；媒体可选本地磁盘或对象存储 |
+| 系统管理 | 提供用户与角色管理、密码重置和版本检查 |
 
 ### Agent 与工具
 
@@ -83,9 +83,9 @@ Agent 运行基于 AgentScope，支持 Skill、MCP 和子 Agent。会话与运�
 
 ### 模型与生成协议
 
-模型和 API 接入信息统一在设置页管理，无需将密钥写入源码。对话与 Agent 支持 OpenAI 兼容接口、Anthropic、Gemini、DashScope 和 Ollama 等模型服务；图片与视频生成支持接入多种服务，并按能力在项目中选用相应模型。
+模型和 API Key 在设置页填写，不会写入源码。云端对话、图片和视频默认走内置的 **云揽川** 聚合网关；本地 **ComfyUI** 工作流可作为第二条生成通道单独配置。页面不再开放自行添加 OpenAI、Anthropic、Gemini 等第三方云端渠道。
 
-具体可用模型取决于服务商账号、接口地址和模型权限。
+启动后请在「设置 > AI 模型」填写云揽川 API Key。具体可用模型取决于网关账号和权限。
 
 ### 存储
 
@@ -115,11 +115,11 @@ https://github.com/user-attachments/assets/be99d4c1-dc09-4616-8fba-06cb959c84c8
 | 媒体 | FFmpeg、FFprobe、本地存储或 S3 兼容对象存储 |
 | 部署 | Docker Compose、Nginx |
 
-## 快速部署
+## 首次安装
 
 ### Docker Compose
 
-推荐使用 Docker Compose 部署。安装 Docker Engine 和 Docker Compose 后，执行：
+首次安装推荐使用 Docker Compose。安装 Docker Engine 和 Docker Compose 后，执行：
 
 ```bash
 git clone https://github.com/yunlance/aifusionvideo.git
@@ -127,19 +127,21 @@ cd aifusionvideo
 
 cp .env.example .env
 
-docker compose up -d --build
+docker compose up -d
 ```
 
-如需自定义端口、密码或部署方式，请以 `.env.example` 为模板创建根目录 `.env`。该文件已被 Git 忽略，更新项目时无需修改 `docker-compose.yml`。
+第一次执行时会自动构建镜像并启动 MySQL、Redis、后端、前端和 Nginx，无需加 `--build`。
 
-启动完成后访问 <http://localhost:5858>，按照页面提示创建管理员账号。查看服务状态或跟踪后端日志，可以运行：
+如需自定义端口或密码，请编辑根目录 `.env`。该文件已被 Git 忽略，以后更新项目时不必改 `docker-compose.yml`。首次启动前建议在 `.env` 中设置 `ADMIN_PASSWORD`。
+
+启动完成后访问 <http://localhost:5858>，使用 `admin` 和 `.env` 中的 `ADMIN_PASSWORD` 登录。查看服务状态或跟踪后端日志，可以运行：
 
 ```bash
 docker compose ps
 docker compose logs -f backend
 ```
 
-Compose 默认启动 MySQL、Redis、后端、前端和 Nginx。Nginx 作为统一访问入口，并将 `/api/**` 和 `/media/**` 请求转发到后端。公网部署前，请通过 `.env` 修改默认数据库与 Redis 密码。
+Nginx 作为统一访问入口，并将 `/api/**` 和 `/media/**` 请求转发到后端。若要部署到公网，请先在 `.env` 中修改默认数据库密码、Redis 密码和 `ADMIN_PASSWORD`。
 
 ### 前后端独立部署
 
@@ -155,7 +157,7 @@ BACKEND_PORT=15858
 `PUBLIC_API_URL` 应填写后端根地址，末尾不要添加 `/api`。后端默认全局允许跨域；生产环境建议像示例一样将 `CORS_ALLOWED_ORIGIN_PATTERNS` 限制为实际前端来源，多个来源使用英文逗号分隔。
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.separated.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.separated.yml up -d
 ```
 
 前后端独立部署不会启动仓库内置的 Nginx。请分别为前端和后端配置 HTTPS 反向代理，并在“系统设置 > 通用”中确认站点公网地址和后端资源公网地址。
@@ -204,8 +206,8 @@ DEV_BACKEND_URL=http://localhost:15858
 | 前端 | <http://localhost:5000> |
 | 后端 | <http://localhost:15858> |
 | Swagger UI | <http://localhost:15858/swagger-ui.html> |
-| MySQL | `localhost:43306` |
-| Redis | `localhost:46379` |
+| MySQL | `localhost:53306` |
+| Redis | `localhost:56379` |
 
 ## 配置说明
 
@@ -215,10 +217,10 @@ Docker Compose 会自动读取仓库根目录的 `.env`。不同启动方式使�
 
 | 部署方式 | Compose 文件 | 需要关注的变量 |
 | --- | --- | --- |
-| 默认统一入口 | `docker-compose.yml` | 必须关注 MySQL root 密码和 Redis 密码；应用账号可选；可按需修改 `MYSQL_DATABASE`、`APP_PORT`、`JAVA_OPTS` 和 CORS 白名单；`PUBLIC_API_URL` 保持为空 |
+| 默认统一入口 | `docker-compose.yml` | 必须关注 MySQL root 密码、Redis 密码和 `ADMIN_PASSWORD`；应用账号可选；可按需修改 `MYSQL_DATABASE`、`APP_PORT`、`JAVA_OPTS` 和 CORS 白名单；`PUBLIC_API_URL` 保持为空 |
 | 前后端独立部署 | 基础 Compose 文件 + `docker-compose.separated.yml` | 必须填写 `PUBLIC_API_URL`；生产环境建议填写 `CORS_ALLOWED_ORIGIN_PATTERNS`；可按需修改 `FRONTEND_PORT`、`BACKEND_PORT`；`APP_PORT` 不生效 |
 
-公网部署前必须修改 MySQL root 密码和 Redis 密码；如启用 MySQL 应用账号，也必须设置独立密码。`FRONTEND_PORT`、`BACKEND_PORT` 和 `PUBLIC_API_URL` 仅在组合使用 `docker-compose.separated.yml` 时生效；`CORS_ALLOWED_ORIGIN_PATTERNS` 对所有部署方式生效。
+公网部署前必须修改 MySQL root 密码、Redis 密码和 `ADMIN_PASSWORD`；如启用 MySQL 应用账号，也必须设置独立密码。`FRONTEND_PORT`、`BACKEND_PORT` 和 `PUBLIC_API_URL` 仅在组合使用 `docker-compose.separated.yml` 时生效；`CORS_ALLOWED_ORIGIN_PATTERNS` 对所有部署方式生效。
 
 | 变量 | 默认值 | 用途 |
 | --- | --- | --- |
@@ -233,12 +235,13 @@ Docker Compose 会自动读取仓库根目录的 `.env`。不同启动方式使�
 | `JAVA_OPTS` | `-Xms512m -Xmx1024m` | 后端 JVM 参数，通常无需修改 |
 | `MYSQL_USERNAME` | 空 | 可选的 MySQL 应用账号，不能设置为 `root`；留空时沿用 root 账号 |
 | `MYSQL_PASSWORD` | 空 | 可选的 MySQL 应用账号密码，必须与 `MYSQL_USERNAME` 同时配置 |
+| `ADMIN_PASSWORD` | 空 | 首次启动时创建 `admin` 账号的密码；公开部署前必须设置，留空则使用内置默认哈希 |
 
 使用统一入口部署时，`PUBLIC_API_URL` 必须保持为空；`CORS_ALLOWED_ORIGIN_PATTERNS` 可保留 `*`，也可限制为站点的实际来源。
 
 `MYSQL_USERNAME` 和 `MYSQL_PASSWORD` 必须同时配置或同时留空。直接复制 `.env.example` 时，这两个变量为空，后端仍使用 `root` 和 `MYSQL_ROOT_PASSWORD`，与历史版本默认行为一致。对于全新数据库，如在首次启动前填写这两个变量，MySQL 会自动创建普通账号并授予 `MYSQL_DATABASE` 的访问权限。已有数据库如需改用普通账号，请先在 MySQL 中创建用户并授权，再填写这两个变量；修改 `.env` 不会自动变更已有数据库账号。
 
-MySQL 端口默认绑定到宿主机 `127.0.0.1:43306`，可直接用本机工具（如 Navicat）访问；Redis 默认不发布端口，如需访问请在 Compose 文件中取消对应 `ports` 注释（示例 `127.0.0.1:46379`）。
+MySQL 端口默认绑定到宿主机 `127.0.0.1:53306`，可直接用本机工具（如 Navicat）访问；Redis 默认不发布端口，如需访问请在 Compose 文件中取消对应 `ports` 注释（示例 `127.0.0.1:46379`）。
 
 ### 公网资源地址
 
@@ -287,8 +290,8 @@ Flyway 迁移脚本位于 `yunlan-video-server/src/main/resources/db/migration/`
 1. Fork 本仓库并克隆到本地，然后将本仓库添加为 `upstream`：
 
    ```bash
-   git clone https://github.com/YOUR-USERNAME/yunlan-video-server.git
-   cd yunlan-video-server
+   git clone https://github.com/YOUR-USERNAME/aifusionvideo.git
+   cd aifusionvideo
    git remote add upstream https://github.com/yunlance/aifusionvideo.git
    ```
 

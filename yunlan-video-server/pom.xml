@@ -13,7 +13,7 @@
 	<artifactId>yunlan-video-server</artifactId>
 	<version>1.0.0</version>
 	<name>yunlan-video-server</name>
-	<description>AI-driven video creation platform</description>
+	<description>云揽镜后端：基于 Agent 的智能视频创作平台</description>
 	<url>https://github.com/yunlance/aifusionvideo</url>
 	<licenses>
 		<license>

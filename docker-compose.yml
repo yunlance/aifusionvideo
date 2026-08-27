@@ -2,7 +2,7 @@
 # 云揽镜 - Docker Compose (从源码本地构建)
 # ============================================
 # 部署配置: 基于 .env.example 创建 .env，并只修改 .env
-# 使用方式: docker compose up -d --build
+# 使用方式: docker compose up -d
 # ============================================
 
 services:
@@ -20,8 +20,9 @@ services:
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-time-zone=${MYSQL_SESSION_TIME_ZONE:-+08:00}
     volumes:
       - mysql_data:/var/lib/mysql
+    # 映射到宿主机 53306，便于本地开发与图形客户端连接。
     ports:
-      - "127.0.0.1:43306:3306"
+      - "127.0.0.1:53306:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -67,6 +68,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-123456}
       CORS_ALLOWED_ORIGIN_PATTERNS: "${CORS_ALLOWED_ORIGIN_PATTERNS:-*}"
       JAVA_OPTS: ${JAVA_OPTS:--Xms512m -Xmx1024m}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
     volumes:
       - media_data:/app/data/media
       - agent_workspace_data:/app/data/agent-workspace
@@ -75,6 +77,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  # ---------- 数据库初始化已移至后端 ----------
+  # 管理员账号与影视演示项目/分镜/镜头由后端启动时的 DataInitializer 幂等写入；
+  # 默认 AI 模型/网关由 Flyway 迁移写入。无需独立的 db-init 容器。
 
   # ---------- 前端 ----------
   frontend:

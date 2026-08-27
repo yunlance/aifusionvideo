@@ -1,8 +1,14 @@
 # ComfyUI 对接开发实施手册
 
+> 需求目录：`dev-docs/2-in-progress/20260823-ComfyUI工作流支持/`
+> 对照日期：2026-08-27
+> 状态：代码已进入当前主干；真实 ComfyUI/GPU 联调未完成；阻塞轮询另见 `1-todo`
+
 ## 1. 文档目的
 
-本文档是 v1.1.0 ComfyUI 对接的长期实施基线，记录范围、架构、协议、数据结构、用户流程、实现顺序和验收标准。实现发生调整时必须先更新本文档，再更新代码和进度文档，避免上下文压缩后丢失决策。
+本文档是 ComfyUI 对接的长期实施基线，记录范围、架构、协议、数据结构、用户流程和验收标准。实现发生调整时必须先更新本文档，再更新代码和进度文档。
+
+当前仓库是云揽镜（YunLan）v1.0.0 基线，ComfyUI 工作流代码已经包含在主干中。上游实施时使用过 `v-1.1.0` 分支，该分支历史不在本仓库。产品对外版本仍是 `1.0.0`（`pom.xml` / 前端 `package.json`）；迁移文件名 `V1.1.1.0.0` 是上游产品 `1.1.0` 的不可变历史，不得改名。
 
 ## 2. 目标与边界
 
@@ -127,8 +133,10 @@ v0.30.0 精确响应契约：`/system_stats` 的版本字段为 `system.comfyui_
 - `afv_image_task.workflow_version_id`：任务提交时固化。
 - `afv_video_task.workflow_version_id`：任务提交时固化。
 
-当前 `main` 的 `V1.1.0.0.0` 至 `V1.1.0.0.8` 属于产品 `1.0.0`。本功能属于产品 `1.1.0`，因此使用
-`V1.1.1.0.0__comfyui_workflow_support.sql`，不得改写任何既有迁移或基线。文件名中的产品版本段为 `1.1.0`，最后一段是该产品版本内从 `0` 开始的迁移序号。
+当前主干已包含 `V1.1.0.0.0` 至 `V1.1.0.0.8`（上游产品 `1.0.0`）以及
+`V1.1.1.0.0__comfyui_workflow_support.sql`（上游产品 `1.1.0` 的 ComfyUI 表结构）。
+另有演示种子 `V1.1.2.0.*`；默认云揽川模型种子 `V1.1.3.0.*` 仍为未跟踪文件。
+不得改写任何既有迁移或基线。
 
 ## 6. 工作流与绑定格式
 
@@ -196,7 +204,7 @@ v0.30.0 精确响应契约：`/system_stats` 的版本字段为 `system.comfyui_
 3. Consumer 获取固定版本，Renderer 深拷贝 API JSON并注入参数。
 4. 输入图片由平台读取为字节并上传 `/upload/image`，返回文件名注入工作流。
 5. Client 生成 UUID、先持久化到 Item，再 `POST /prompt`。
-6. Strategy 轮询 `/api/jobs/{id}`，支持取消和超时。
+6. Strategy 在消费线程内轮询 `/api/jobs/{id}`，支持取消和超时。这是第一版同步实现；异步调度见 `1-todo/2026-08-23-ComfyUI任务异步轮询.md`。
 7. 完成后仅按输出绑定解析文件描述。
 8. Client 通过 `/view` 流式下载到受控临时文件，校验大小和数量。
 9. `MediaStorageService.storeFile` 保存结果并更新 Item，临时文件随后删除。
@@ -204,8 +212,9 @@ v0.30.0 精确响应契约：`/system_stats` 的版本字段为 `system.comfyui_
 
 ## 9. 前端设计
 
-- `PLATFORM_OPTIONS` 增加 ComfyUI。
+- `PLATFORM_OPTIONS` 现为云揽川（`newapi`）与 ComfyUI。
 - API 配置 Dialog 对 ComfyUI 显示实例地址、Bearer Token、代理和连接测试，不显示远程模型同步入口。
+- 注意：`/settings/ai-models` 仅在没有任何 API 配置时显示新建入口。已有云揽川配置后，目前不能从页面再添加 ComfyUI，见 NewAPI 锁定需求的技术债。
 - 模型 Dialog 在选择 ComfyUI 图片/视频模型时显示工作流选择器，模型协议固定为 `comfyui`。
 - 选择工作流后按已发布版本的绑定同步图片参考能力；传输格式明确写为 `url` 与 `data_uri`，视频/音频文件上传能力不在第一版宣告。
 - 工作流入口位于对应的 ComfyUI 供应商卡片，目录与新建操作固定按 `apiConfigId` 隔离，不提供脱离供应商的全局入口。
@@ -227,8 +236,7 @@ v0.30.0 精确响应契约：`/system_stats` 的版本字段为 `system.comfyui_
 
 ### 阶段 A：基线与文档
 
-- 分支从 `main` 创建。
-- 三份文档落库。
+- 三份文档落库（本仓库目录为 `20260823-ComfyUI工作流支持/`）。
 
 ### 阶段 B：工作流领域
 
@@ -255,13 +263,10 @@ v0.30.0 精确响应契约：`/system_stats` 的版本字段为 `system.comfyui_
 
 ## 12. 当前验证记录
 
-- `FlywayMigrationNamingTests`：2/2 通过，确认产品 `1.1.0` 首条迁移为 `V1.1.1.0.0`。
-- ComfyUI 文档、Renderer、Native Client、输入/输出资源、领域服务、模型绑定、图片/视频 Strategy、版本固化与取消
-  路径，加上 Flyway 命名测试：选定后端验证集 46/46 通过。
-- Native Client 已按官方 v0.30.0 `server.py` 与 `comfy_execution/jobs.py` 终审；连接版本字段不做 fallback，未知
-  `Content-Length` 的 JSON、输入图片和输出下载也分别在缓冲/写入前执行 16MB、20MB、1GB 硬上限。
-- 前端：`pnpm exec tsc --noEmit`、`pnpm lint`（0 error）和 `pnpm build` 通过。
-- 后端全量 `mvn test` 已运行；除 3 个依赖本地 MySQL 的 Spring 上下文测试类因 `Connection refused` 失败外，其余报告无失败。真实 Flyway validate 与 ComfyUI/GPU 联调仍受外部环境限制。
+- 代码已在当前主干：工作流表/实体/管理接口、Native Client、Renderer、图片/视频 Strategy、前端六步工作流管理均存在。
+- Native Client 以官方 v0.30.0 为契约：连接检测读 `system.comfyui_version`，任务走 `/api/jobs/{id}`，不做旧版接口 fallback。
+- 运行态轮询仍在消费线程里 `waitForJob()` + `Thread.sleep`，见 `ComfyUiGenerationExecutor`。异步轮询改造不在本需求，见 `dev-docs/1-todo/2026-08-23-ComfyUI任务异步轮询.md`。
+- 真实 ComfyUI/GPU 联调、应用启动级 Flyway validate 仍受外部环境限制，不得标记为已完成。
 
 ## 13. 官方资料
 

@@ -1,6 +1,8 @@
+# 云揽镜后端镜像构建上下文排除项
 target/
 .git/
 .gitignore
 .mvn/repository/
 *.md
+docker-compose*.yml
 docker-compose*.yaml

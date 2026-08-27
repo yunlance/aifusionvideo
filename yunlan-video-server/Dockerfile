@@ -16,6 +16,7 @@ RUN --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline -B
 
 # 复制源码并打包
 COPY src/ src/
+# 镜像构建跳过测试，测试在 CI / 本地 `./mvnw test` 中运行
 RUN --mount=type=cache,target=/root/.m2 ./mvnw package -DskipTests -B
 
 # ---------- 阶段 2: 运行 ----------

@@ -71,10 +71,21 @@
 ### DEBT-COMFY-009：本地 MySQL 未启动，无法完成真实 Flyway validate
 
 - 状态：受外部环境限制
-- 当前证据：`FlywayMigrationNamingTests` 2/2 通过；含模型绑定、ComfyUI 单元/契约、输入/输出资源与图片/视频
-  生成链路在内的后端选定验证集 46/46 通过。
-- 阻塞表现：全量 `mvn test` 中 3 个 Spring 上下文测试类因 MySQL `Connection refused` 失败。
+- 当前证据：迁移文件 `V1.1.1.0.0__comfyui_workflow_support.sql` 已在主干；命名规则见 Flyway README。
 - 后续验收：启动项目目标 MySQL，执行应用启动或等价 Flyway validate，并重新运行全量测试。
+
+### DEBT-COMFY-010：任务状态仍在消费线程内阻塞轮询
+
+- 状态：已拆为独立待办
+- 原因：`ComfyUiGenerationExecutor.waitForJob()`、`ComfyUiImageStrategy`、`ComfyUiVideoStrategy` 以及工作流试运行仍用 `Thread.sleep` 循环查询 `/api/jobs/{id}`。
+- 当前策略：第一版可工作，但占用队列消费线程，进程重启无法继续未完成的远端任务。
+- 后续方向：`dev-docs/1-todo/2026-08-23-ComfyUI任务异步轮询.md`。
+
+### DEBT-COMFY-011：已有云揽川配置后无法从 UI 添加 ComfyUI
+
+- 状态：待处理
+- 原因：`/settings/ai-models` 仅在 `configs.length === 0` 时显示新建入口。
+- 后续方向：随 NewAPI 锁定需求一并修复，按平台判断缺失入口。
 
 ## 已清偿债务
 

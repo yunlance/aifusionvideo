@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { toast } from "sonner";
 import {
   ChevronRight,
+  CloudDownload,
   Download,
   Edit2,
   LayoutGrid,
@@ -501,14 +502,16 @@ export default function AiModelsPage() {
             )}
             {isAdmin && (
               <>
-                <button
-                  type="button"
-                  onClick={() => setFetchModelsConfig(config)}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl text-sky-500 transition-colors hover:bg-sky-500/10 hover:text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  title="从网关拉取模型"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </button>
+                {config.platform !== "comfyui" && (
+                  <button
+                    type="button"
+                    onClick={() => setFetchModelsConfig(config)}
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-sky-500 transition-colors hover:bg-sky-500/10 hover:text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    title="获取可用模型列表"
+                  >
+                    <CloudDownload className="h-3.5 w-3.5" />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => { setEditingConfig(config); setConfigDialogOpen(true); }}
@@ -953,6 +956,7 @@ export default function AiModelsPage() {
         open={fetchModelsConfig !== null}
         onOpenChange={open => { if (!open) setFetchModelsConfig(null); }}
         apiConfig={fetchModelsConfig}
+        existingModelCodes={new Set(models.filter(m => m.apiConfigId === fetchModelsConfig?.id).map(m => m.code))}
         onImported={() => { loadModels(); }}
       />
       <AiModelDialog

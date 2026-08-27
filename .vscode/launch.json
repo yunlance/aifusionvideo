@@ -2,11 +2,11 @@
   "configurations": [
     {
       "type": "java",
-      "name": "Spring Boot-FusionVideoApplication<ai-fusion-video>",
+      "name": "Spring Boot-FusionVideoApplication<yunlan-video-server>",
       "request": "launch",
-      "cwd": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}/yunlan-video-server",
       "mainClass": "com.stonewu.fusion.FusionVideoApplication",
-      "projectName": "ai-fusion-video",
+      "projectName": "yunlan-video-server",
       "args": "",
       "envFile": "${workspaceFolder}/.env",
       "console": "integratedTerminal"

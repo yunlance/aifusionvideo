@@ -35,7 +35,7 @@ class AiProviderServiceFingerprintTests {
                 .apiKey("first-key")
                 .proxyType("http")
                 .proxyHost("proxy-a")
-                .proxyPort(8080)
+                .proxyPort(5858)
                 .build();
         ApiConfig secondConfig = ApiConfig.builder()
                 .id(3L)

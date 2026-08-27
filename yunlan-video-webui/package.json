@@ -2,7 +2,7 @@
   "name": "yunlan-video-webui",
   "version": "1.0.0",
   "private": true,
-  "description": "Web application for the AI-driven video creation platform",
+  "description": "云揽镜前端：基于 Agent 的智能视频创作平台",
   "license": "MIT",
   "homepage": "https://github.com/yunlance/aifusionvideo",
   "repository": {
@@ -12,7 +12,7 @@
   },
   "packageManager": "pnpm@10.32.1",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 5000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

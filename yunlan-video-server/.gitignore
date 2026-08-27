@@ -1,5 +1,8 @@
+# 云揽镜后端
 HELP.md
 target/
+/data/
+/logs/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

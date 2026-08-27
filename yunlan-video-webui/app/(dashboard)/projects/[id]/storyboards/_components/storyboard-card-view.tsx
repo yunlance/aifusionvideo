@@ -52,6 +52,7 @@ const CardItemUI = memo(
       style?: React.CSSProperties;
       isDragging?: boolean;
       isOverlay?: boolean;
+      isDemo?: boolean;
     }
   >(
     (
@@ -69,6 +70,7 @@ const CardItemUI = memo(
         style,
         isDragging,
         isOverlay,
+        isDemo = false,
       },
       ref
     ) => {
@@ -345,6 +347,7 @@ function SortableCardItem({
   onVideoGen,
   onOpenFrameDialog,
   onPreviewVideo,
+  isDemo = false,
 }: {
   item: StoryboardItem;
   idx: number;
@@ -354,6 +357,7 @@ function SortableCardItem({
   onVideoGen?: (itemId: number) => void;
   onOpenFrameDialog?: (item: StoryboardItem, frameType: StoryboardFrameType) => void;
   onPreviewVideo?: (videoUrl: string) => void;
+  isDemo?: boolean;
 }) {
   const {
     attributes,
@@ -381,6 +385,7 @@ function SortableCardItem({
       onVideoGen={onVideoGen}
       onOpenFrameDialog={onOpenFrameDialog}
       onPreviewVideo={onPreviewVideo}
+      isDemo={isDemo}
       attributes={attributes}
       listeners={listeners}
       isDragging={isDragging}
@@ -407,6 +412,7 @@ export function StoryboardCardView({
   onReorderItems?: (reordered: StoryboardItem[]) => void;
   onVideoGen?: (itemId: number) => void;
   onOpenFrameDialog?: (item: StoryboardItem, frameType: StoryboardFrameType) => void;
+  isDemo?: boolean;
 }) {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
@@ -491,6 +497,7 @@ export function StoryboardCardView({
                 onVideoGen={onVideoGen}
                 onOpenFrameDialog={onOpenFrameDialog}
                 onPreviewVideo={setPreviewVideoUrl}
+                isDemo={isDemo}
               />
             ))}
 

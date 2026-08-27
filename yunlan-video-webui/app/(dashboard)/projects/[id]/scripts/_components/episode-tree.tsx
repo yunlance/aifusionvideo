@@ -144,6 +144,7 @@ export function EpisodeTree({
   collapsed?: boolean;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  isDemo?: boolean;
   onToggleEpisode: (id: number) => void;
   onSelectEpisode: (id: number) => void;
   onSelectScene: (sceneId: number, episodeId: number) => void;
