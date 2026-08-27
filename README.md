@@ -105,6 +105,14 @@ docker compose logs -f backend
 
 Nginx 作为统一访问入口，并将 `/api/**` 和 `/media/**` 请求转发到后端。若要部署到公网，请先在 `.env` 中修改默认数据库密码、Redis 密码和 `ADMIN_PASSWORD`。
 
+### 本地构建镜像
+
+如需从当前源码构建前后端镜像，执行：
+
+```bash
+docker compose -f docker-compose.build.yml up -d --build
+```
+
 ### 前后端独立部署
 
 如果前端与后端分别使用不同的公网域名，请在 `.env` 中配置：
