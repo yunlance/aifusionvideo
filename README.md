@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="云揽镜 Logo" width="368" />
+  <img src="assets/banner-design.png" alt="云揽镜 紫蓝配色设计" width="920" />
 </p>
 
 <p align="center">
@@ -17,50 +17,12 @@
   <img src="https://img.shields.io/badge/Next.js-16-000000" alt="Next.js 16" />
 </p>
 
-<p align="center">
-  <img src="assets/banner-design.png" alt="云揽镜 紫蓝配色设计" width="920" />
-</p>
-
-<table align="center" style="margin: 0 auto; display: table;">
-  <tr>
-    <td align="center">
-      <b>想合作或反馈？欢迎在 <a href="https://github.com/yunlance/aifusionvideo/issues">GitHub Issues</a> 与我们联系</b>
-    </td>
-  </tr>
-</table>
-
-<table align="center">
-  <thead>
-    <tr>
-      <th align="center">联系作者</th>
-      <th align="center">加入交流群</th>
-      <th align="center">请作者喝杯咖啡</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center" width="33%">
-        <a href="https://github.com/yunlance/aifusionvideo/issues">在 GitHub 提交 Issue</a>
-      </td>
-      <td align="center" width="33%">
-        <a href="https://github.com/yunlance/aifusionvideo/discussions">GitHub Discussions</a>
-      </td>
-      <td align="center" width="33%">
-        <a href="https://github.com/yunlance/aifusionvideo">Star 本项目 ⭐</a>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- <p align="center">
-  <sub><b>微信群超过 200 人后无法扫码加入。请添加作者微信并备注“云揽镜”。</b></sub>
-</p> -->
 
 <hr/>
 
 云揽镜是一款面向视频创作者的 Agent 驱动创作平台，将项目、剧本、分镜、素材以及图片与视频生成整合在统一工作区。创作者可以按分集和场景组织剧本、拆解与调整分镜，并围绕每个镜头完成素材生成和管理。
 
-本仓库包含 Java 后端、Next.js 前端和 Docker Compose 部署配置。首次安装后访问页面，使用 `admin` 登录即可开始使用。云端模型默认走云揽川聚合网关，本地 ComfyUI 作为可选生成通道。
+本仓库包含 Java 后端、Next.js 前端和 Docker Compose 部署配置。部署完成后访问页面，使用 `admin` 登录即可开始使用。云端模型默认走云揽川聚合网关，本地 ComfyUI 作为可选生成通道。
 
 ## 功能
 
@@ -115,11 +77,11 @@ https://github.com/user-attachments/assets/be99d4c1-dc09-4616-8fba-06cb959c84c8
 | 媒体 | FFmpeg、FFprobe、本地存储或 S3 兼容对象存储 |
 | 部署 | Docker Compose、Nginx |
 
-## 首次安装
+## 快速部署
 
 ### Docker Compose
 
-首次安装推荐使用 Docker Compose。安装 Docker Engine 和 Docker Compose 后，执行：
+推荐使用 Docker Compose 部署。安装 Docker Engine 和 Docker Compose 后，执行：
 
 ```bash
 git clone https://github.com/yunlance/aifusionvideo.git
@@ -130,9 +92,9 @@ cp .env.example .env
 docker compose up -d
 ```
 
-第一次执行时会自动构建镜像并启动 MySQL、Redis、后端、前端和 Nginx，无需加 `--build`。
+执行后会自动构建镜像并启动 MySQL、Redis、后端、前端和 Nginx，无需额外加 `--build`。
 
-如需自定义端口或密码，请编辑根目录 `.env`。该文件已被 Git 忽略，以后更新项目时不必改 `docker-compose.yml`。首次启动前建议在 `.env` 中设置 `ADMIN_PASSWORD`。
+如需自定义端口、密码或部署方式，请以 `.env.example` 为模板编辑根目录 `.env`。该文件已被 Git 忽略，更新项目时无需修改 `docker-compose.yml`。建议部署前在 `.env` 中设置 `ADMIN_PASSWORD`。
 
 启动完成后访问 <http://localhost:5858>，使用 `admin` 和 `.env` 中的 `ADMIN_PASSWORD` 登录。查看服务状态或跟踪后端日志，可以运行：
 
@@ -235,11 +197,11 @@ Docker Compose 会自动读取仓库根目录的 `.env`。不同启动方式使�
 | `JAVA_OPTS` | `-Xms512m -Xmx1024m` | 后端 JVM 参数，通常无需修改 |
 | `MYSQL_USERNAME` | 空 | 可选的 MySQL 应用账号，不能设置为 `root`；留空时沿用 root 账号 |
 | `MYSQL_PASSWORD` | 空 | 可选的 MySQL 应用账号密码，必须与 `MYSQL_USERNAME` 同时配置 |
-| `ADMIN_PASSWORD` | 空 | 首次启动时创建 `admin` 账号的密码；公开部署前必须设置，留空则使用内置默认哈希 |
+| `ADMIN_PASSWORD` | 空 | 启动时创建 `admin` 账号的密码；公开部署前必须设置，留空则使用内置默认哈希 |
 
 使用统一入口部署时，`PUBLIC_API_URL` 必须保持为空；`CORS_ALLOWED_ORIGIN_PATTERNS` 可保留 `*`，也可限制为站点的实际来源。
 
-`MYSQL_USERNAME` 和 `MYSQL_PASSWORD` 必须同时配置或同时留空。直接复制 `.env.example` 时，这两个变量为空，后端仍使用 `root` 和 `MYSQL_ROOT_PASSWORD`，与历史版本默认行为一致。对于全新数据库，如在首次启动前填写这两个变量，MySQL 会自动创建普通账号并授予 `MYSQL_DATABASE` 的访问权限。已有数据库如需改用普通账号，请先在 MySQL 中创建用户并授权，再填写这两个变量；修改 `.env` 不会自动变更已有数据库账号。
+`MYSQL_USERNAME` 和 `MYSQL_PASSWORD` 必须同时配置或同时留空。直接复制 `.env.example` 时，这两个变量为空，后端仍使用 `root` 和 `MYSQL_ROOT_PASSWORD`，与历史版本默认行为一致。对于全新数据库，如在启动前填写这两个变量，MySQL 会自动创建普通账号并授予 `MYSQL_DATABASE` 的访问权限。已有数据库如需改用普通账号，请先在 MySQL 中创建用户并授权，再填写这两个变量；修改 `.env` 不会自动变更已有数据库账号。
 
 MySQL 端口默认绑定到宿主机 `127.0.0.1:53306`，可直接用本机工具（如 Navicat）访问；Redis 默认不发布端口，如需访问请在 Compose 文件中取消对应 `ports` 注释（示例 `127.0.0.1:46379`）。
 
