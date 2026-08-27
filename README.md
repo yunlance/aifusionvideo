@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <img src="https://api.star-history.com/svg?repos=yunlance/aifusionvideo&type=Date" alt="GitHub Star History" width="920" />
+  <img src="assets/banner-design.png" alt="云揽镜 紫蓝配色设计" width="920" />
 </p>
 
 <table align="center" style="margin: 0 auto; display: table;">
