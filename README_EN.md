@@ -60,7 +60,7 @@
 
 AI Fusion Video is an Agent-driven platform for video creators. It brings projects, scripts, storyboards, assets, and image and video generation into one workspace. Creators can organize scripts by episode and scene, break them down into storyboards, refine individual shots, and generate and manage the assets needed for production.
 
-This repository includes a Java backend, a Next.js frontend, and Docker Compose deployment files. After the first installation, open the site and sign in as `admin`. Cloud models use the built-in Yunlan Chuan gateway, with local ComfyUI as an optional generation channel.
+This repository includes a Java backend, a Next.js frontend, and Docker Compose deployment files. After deployment, open the site and sign in as `admin`. Cloud models use the built-in Yunlan Chuan gateway, with local ComfyUI as an optional generation channel.
 
 ## Features
 
@@ -115,11 +115,11 @@ https://github.com/user-attachments/assets/be99d4c1-dc09-4616-8fba-06cb959c84c8
 | Media | FFmpeg, FFprobe, local storage or an S3-compatible object store |
 | Deployment | Docker Compose, Nginx |
 
-## First-time installation
+## Quick Deploy
 
 ### Docker Compose
 
-Docker Compose is recommended for the first installation. With Docker Engine and Docker Compose installed, run:
+Docker Compose is recommended for deployment. With Docker Engine and Docker Compose installed, run:
 
 ```bash
 git clone https://github.com/yunlance/aifusionvideo.git
@@ -130,9 +130,9 @@ cp .env.example .env
 docker compose up -d
 ```
 
-The first run builds the images automatically and starts MySQL, Redis, the backend, the frontend, and Nginx. You do not need `--build`.
+This command builds the images automatically and starts MySQL, Redis, the backend, the frontend, and Nginx. You do not need `--build`.
 
-To customize ports or passwords, edit the root `.env` file. Git ignores this file, so later project updates do not require changes to `docker-compose.yml`. Set `ADMIN_PASSWORD` in `.env` before the first launch.
+To customize ports or passwords, edit the root `.env` file. Git ignores this file, so later project updates do not require changes to `docker-compose.yml`. Set `ADMIN_PASSWORD` in `.env` before deployment.
 
 When startup completes, open <http://localhost:5858> and sign in as `admin` with the `ADMIN_PASSWORD` from `.env`. To check the services or follow the backend logs, run:
 
@@ -142,6 +142,14 @@ docker compose logs -f backend
 ```
 
 Nginx provides a single entry point and forwards `/api/**` and `/media/**` requests to the backend. Before a public deployment, update the default database password, Redis password, and `ADMIN_PASSWORD` in `.env`.
+
+### Build images locally
+
+To build the frontend and backend images from the current source, run:
+
+```bash
+docker compose -f docker-compose.build.yml up -d --build
+```
 
 ### Separate frontend and backend deployment
 
@@ -235,11 +243,11 @@ Change the MySQL root password, Redis password, and `ADMIN_PASSWORD` before any 
 | `JAVA_OPTS` | `-Xms512m -Xmx1024m` | Backend JVM options; normally do not need to be changed |
 | `MYSQL_USERNAME` | Empty | Optional MySQL application account; must not be set to `root`; leaving it empty preserves root access |
 | `MYSQL_PASSWORD` | Empty | Optional MySQL application password; must be configured together with `MYSQL_USERNAME` |
-| `ADMIN_PASSWORD` | Empty | Password for the `admin` account created on first startup; set it before a public deployment. Leaving it empty uses a built-in default hash |
+| `ADMIN_PASSWORD` | Empty | Password for the `admin` account created on startup; set it before a public deployment. Leaving it empty uses a built-in default hash |
 
 Keep `PUBLIC_API_URL` empty when you use the unified gateway. `CORS_ALLOWED_ORIGIN_PATTERNS` may remain `*` or be restricted to the site's actual origin.
 
-`MYSQL_USERNAME` and `MYSQL_PASSWORD` must either both be set or both remain empty. When `.env.example` is copied as-is, both variables are empty and the backend continues using `root` with `MYSQL_ROOT_PASSWORD`, matching the historical default. For a new database, setting both variables before the first startup makes MySQL create the regular account and grant it access to `MYSQL_DATABASE`. To move an existing database to a regular account, create and grant the user in MySQL before setting these variables; changing `.env` does not modify existing database accounts.
+`MYSQL_USERNAME` and `MYSQL_PASSWORD` must either both be set or both remain empty. When `.env.example` is copied as-is, both variables are empty and the backend continues using `root` with `MYSQL_ROOT_PASSWORD`, matching the historical default. For a new database, setting both variables before startup makes MySQL create the regular account and grant it access to `MYSQL_DATABASE`. To move an existing database to a regular account, create and grant the user in MySQL before setting these variables; changing `.env` does not modify existing database accounts.
 
 The MySQL port is published to `127.0.0.1:53306` by default, so local tools such as Navicat can connect directly. The Redis port is not published by default; to expose it, uncomment the corresponding `ports` entry in the Compose file (for example, `127.0.0.1:46379`).
 
