@@ -199,6 +199,20 @@ Windows users can run `.\mvnw.cmd spring-boot:run`.
 
 The backend uses the `local` profile by default. Its settings live in `yunlan-video-server/src/main/resources/application-local.yaml`. If FFmpeg and FFprobe are not in their default locations, set `VIDEO_COMPOSE_FFMPEG_PATH` and `VIDEO_COMPOSE_FFPROBE_PATH` to the correct binaries.
 
+### Install dependencies without Docker (optional)
+
+If Docker is inconvenient, you can install and run MySQL and Redis directly:
+
+1. Install and start **MySQL 8**, and create the `aifusionvideo` database (use `root` to keep the default account).
+2. Install and start **Redis**. Windows has no official native build; use [Memurai](https://www.memurai.com/) or WSL. Linux/macOS can use the package manager.
+3. Edit `yunlan-video-server/src/main/resources/application-local.yaml`:
+   - `spring.datasource.url` / `username` / `password`: point to your local MySQL. A direct install uses port `3306` (not `53306`).
+   - `spring.data.redis.host` / `port` / `password`: point to your local Redis. A direct install uses port `6379` (not `56379`).
+   - `video.compose.ffmpeg-path` / `ffprobe-path`: set your local FFmpeg/FFprobe paths, or override them via `VIDEO_COMPOSE_FFMPEG_PATH` / `VIDEO_COMPOSE_FFPROBE_PATH`.
+4. Then start the backend (`./mvnw spring-boot:run`) and frontend (`pnpm dev`) as described above.
+
+> The default `53306` / `56379` ports and `D:\ffmpeg-...` paths match the Docker middleware and a local example environment. Change them to match your own setup when installing locally.
+
 ### Start the frontend
 
 Open another terminal at the repository root:

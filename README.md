@@ -161,6 +161,20 @@ Windows 环境可以运行 `.\mvnw.cmd spring-boot:run`。
 
 后端默认使用 `local` 配置，相关设置位于 `yunlan-video-server/src/main/resources/application-local.yaml`。如果 FFmpeg 和 FFprobe 不在默认路径，请通过 `VIDEO_COMPOSE_FFMPEG_PATH` 和 `VIDEO_COMPOSE_FFPROBE_PATH` 指定实际位置。
 
+### 不使用 Docker 安装依赖（可选）
+
+如果本机不便使用 Docker，也可以直接安装并运行 MySQL 和 Redis：
+
+1. 安装并启动 **MySQL 8**，创建数据库 `aifusionvideo`（沿用默认账号可用 `root`）。
+2. 安装并启动 **Redis**。Windows 无官方原生版，可用 [Memurai](https://www.memurai.com/) 或 WSL；Linux/macOS 用包管理器安装即可。
+3. 编辑 `yunlan-video-server/src/main/resources/application-local.yaml`：
+   - `spring.datasource.url` / `username` / `password`：改成本机 MySQL 地址。本机直装默认端口是 `3306`（不是 `53306`）。
+   - `spring.data.redis.host` / `port` / `password`：改成本机 Redis 地址。本机直装默认端口是 `6379`（不是 `56379`）。
+   - `video.compose.ffmpeg-path` / `ffprobe-path`：改成本机 FFmpeg/FFprobe 的实际路径，或通过环境变量 `VIDEO_COMPOSE_FFMPEG_PATH` / `VIDEO_COMPOSE_FFPROBE_PATH` 覆盖。
+4. 配置完成后，按上文命令启动后端（`./mvnw spring-boot:run`）与前端（`pnpm dev`）。
+
+> 默认配置中的 `53306` / `56379` 端口和 `D:\ffmpeg-...` 路径是配合 Docker 中间件与本机示例环境使用的，改用本机安装时请按实际环境修改。
+
 ### 启动前端
 
 另开一个终端，在仓库根目录执行：
