@@ -17,6 +17,13 @@
   <img src="https://img.shields.io/badge/Next.js-16-000000" alt="Next.js 16" />
 </p>
 
+<p align="center">
+  <a href="https://md.xinchyun.com/"><img src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E5%85%8D%E8%B4%B9%E4%BD%93%E9%AA%8C-%E7%AB%8B%E5%8D%B3%E5%89%8D%E5%BE%80-8B5CF6?style=for-the-badge&logo=rocket" alt="在线免费体验" width="260" /></a>
+</p>
+
+<p align="center">
+  <sub>无需部署，打开浏览器即可体验完整功能 → <a href="https://md.xinchyun.com/"><strong>md.xinchyun.com</strong></a></sub>
+</p>
 
 <hr/>
 

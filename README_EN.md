@@ -18,6 +18,14 @@
 </p>
 
 <p align="center">
+  <a href="https://md.xinchyun.com/"><img src="https://img.shields.io/badge/Try%20It%20Online-Free-8B5CF6?style=for-the-badge&logo=rocket" alt="Try It Online Free" width="260" /></a>
+</p>
+
+<p align="center">
+  <sub>No deployment needed — try the full platform in your browser → <a href="https://md.xinchyun.com/"><strong>md.xinchyun.com</strong></a></sub>
+</p>
+
+<p align="center">
   <img src="https://api.star-history.com/svg?repos=yunlance/aifusionvideo&type=Date" alt="GitHub Star History" width="920" />
 </p>
 
