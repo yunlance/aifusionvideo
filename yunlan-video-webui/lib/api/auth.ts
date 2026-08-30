@@ -18,6 +18,13 @@ export function register(data: RegisterReqVO): Promise<LoginRespVO> {
 }
 
 /**
+ * 发送邮箱注册验证码
+ */
+export function sendEmailCode(email: string): Promise<boolean> {
+  return http.post<never, boolean>("/api/auth/send-email-code", { email });
+}
+
+/**
  * 获取当前用户信息
  */
 export function getUserInfo(): Promise<UserRespVO> {

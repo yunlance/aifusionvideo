@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import cn.hutool.core.util.StrUtil;
+import com.stonewu.fusion.security.SecurityUtils;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
@@ -37,12 +38,19 @@ public class AiModelService {
     private final AiModelMapper aiModelMapper;
     private final ApiConfigService apiConfigService;
     private final ModelPresetService modelPresetService;
+    private final ModelAccessResolver modelAccessResolver;
     private final AiModelMetadataResolver aiModelMetadataResolver;
     private final ChatModelFactory chatModelFactory;
     private final ComfyUiWorkflowService comfyUiWorkflowService;
 
     @Transactional
     public Long createAiModel(AiModel aiModel) {
+        // 归属设置：普通用户创建的模型归属自己；管理员在全局模式下维护全局模型、私有模式下维护自己的私有模型
+        if (modelAccessResolver.isAdmin()) {
+            aiModel.setUserId(modelAccessResolver.isGlobalMode() ? null : SecurityUtils.requireCurrentUserId());
+        } else {
+            aiModel.setUserId(SecurityUtils.requireCurrentUserId());
+        }
         validateApiConfig(aiModel.getApiConfigId(), true);
         validateUniqueCode(null, aiModel.getApiConfigId(), aiModel.getCode());
         normalizeMetadata(aiModel);
@@ -55,7 +63,7 @@ public class AiModelService {
             throwDuplicateCodeException(aiModel.getApiConfigId(), e);
         }
         if (Boolean.TRUE.equals(aiModel.getDefaultModel())) {
-            clearOtherDefaults(aiModel.getModelType(), aiModel.getId());
+            clearOtherDefaults(aiModel.getModelType(), aiModel.getId(), aiModel.getUserId());
         }
         return aiModel.getId();
     }
@@ -118,19 +126,35 @@ public class AiModelService {
             throwDuplicateCodeException(nextApiConfigId, e);
         }
         if (Boolean.TRUE.equals(model.getDefaultModel())) {
-            clearOtherDefaults(model.getModelType(), model.getId());
+            clearOtherDefaults(model.getModelType(), model.getId(), model.getUserId());
         }
         chatModelFactory.evict(id);
     }
 
     @Transactional
     public void deleteAiModel(Long id) {
+        AiModel model = aiModelMapper.selectById(id);
+        if (model == null) {
+            throw new BusinessException(404, "AI模型不存在");
+        }
+        modelAccessResolver.assertOwned(model);
         aiModelMapper.softDeleteById(id);
         chatModelFactory.evict(id);
     }
 
+    /**
+     * 查询指定用户私有模型列表（供总后台用户设置管理使用）。
+     */
+    public List<AiModel> listByUserId(Long userId) {
+        return aiModelMapper.selectList(new LambdaQueryWrapper<AiModel>()
+                .eq(AiModel::getUserId, userId)
+                .orderByDesc(AiModel::getId));
+    }
+
     public AiModel getById(Long id) {
-        return aiModelMapper.selectById(id);
+        AiModel model = aiModelMapper.selectById(id);
+        modelAccessResolver.assertVisible(model);
+        return model;
     }
 
     public AiModel getByCodeAndApiConfig(String code, Long apiConfigId) {
@@ -150,29 +174,67 @@ public class AiModelService {
         wrapper.like(name != null, AiModel::getName, name)
                 .like(code != null, AiModel::getCode, code)
                 .eq(modelType != null, AiModel::getModelType, modelType)
-                .eq(status != null, AiModel::getStatus, status)
-                .orderByAsc(AiModel::getSort)
+                .eq(status != null, AiModel::getStatus, status);
+        applyVisibleScope(wrapper);
+        wrapper.orderByAsc(AiModel::getSort)
                 .orderByDesc(AiModel::getId);
         return PageResult.of(aiModelMapper.selectPage(new Page<>(pageNo, pageSize), wrapper));
     }
 
+    /**
+     * 按当前模式/角色限定可见范围（管理分页用）：管理员可见全部；普通用户仅可见当前模式下自己的模型。
+     */
+    private void applyVisibleScope(LambdaQueryWrapper<AiModel> wrapper) {
+        if (modelAccessResolver.isAdmin()) {
+            return;
+        }
+        if (modelAccessResolver.isGlobalMode()) {
+            wrapper.isNull(AiModel::getUserId);
+        } else {
+            wrapper.eq(AiModel::getUserId, SecurityUtils.getCurrentUserId());
+        }
+    }
+
+    /**
+     * 生成/选择场景的可见范围（管理员也按模式过滤，符合"管理员也是用户"）：
+     * 全局模式用全局模型；私有模式用当前用户私有模型；无登录上下文（如异步任务）时回退全局模型，避免查询返回空。
+     */
+    private void applyGenerationScope(LambdaQueryWrapper<AiModel> wrapper) {
+        if (modelAccessResolver.isGlobalMode()) {
+            wrapper.isNull(AiModel::getUserId);
+        } else {
+            Long userId = SecurityUtils.getCurrentUserId();
+            if (userId != null) {
+                wrapper.eq(AiModel::getUserId, userId);
+            } else {
+                wrapper.isNull(AiModel::getUserId);
+            }
+        }
+    }
+
     public List<AiModel> getEnabledList() {
-        return aiModelMapper.selectList(new LambdaQueryWrapper<AiModel>().eq(AiModel::getStatus, 1));
+        LambdaQueryWrapper<AiModel> wrapper = new LambdaQueryWrapper<AiModel>().eq(AiModel::getStatus, 1);
+        applyGenerationScope(wrapper);
+        return aiModelMapper.selectList(wrapper);
     }
 
     public List<AiModel> getListByType(Integer modelType) {
-        return aiModelMapper.selectList(new LambdaQueryWrapper<AiModel>()
+        LambdaQueryWrapper<AiModel> wrapper = new LambdaQueryWrapper<AiModel>()
                 .eq(AiModel::getStatus, 1)
-                .eq(AiModel::getModelType, modelType));
+                .eq(AiModel::getModelType, modelType);
+        applyGenerationScope(wrapper);
+        return aiModelMapper.selectList(wrapper);
     }
 
     public AiModel getDefaultByType(Integer modelType) {
-        return aiModelMapper.selectOne(new LambdaQueryWrapper<AiModel>()
+        LambdaQueryWrapper<AiModel> wrapper = new LambdaQueryWrapper<AiModel>()
                 .eq(AiModel::getDefaultModel, true)
                 .eq(AiModel::getModelType, modelType)
-                .eq(AiModel::getStatus, 1)
-                .orderByAsc(AiModel::getSort)
-                .last("LIMIT 1"));
+                .eq(AiModel::getStatus, 1);
+        applyGenerationScope(wrapper);
+        wrapper.orderByAsc(AiModel::getSort)
+                .last("LIMIT 1");
+        return aiModelMapper.selectOne(wrapper);
     }
 
     public AiModelConnectivityRespVO testTextModelConnectivity(Long id) {
@@ -321,15 +383,21 @@ public class AiModelService {
         comfyUiWorkflowService.validateModelBinding(model, apiConfig);
     }
 
-    private void clearOtherDefaults(Integer modelType, Long excludeId) {
+    private void clearOtherDefaults(Integer modelType, Long excludeId, Long userId) {
         if (modelType == null || excludeId == null) {
             return;
         }
-        aiModelMapper.update(null, new LambdaUpdateWrapper<AiModel>()
+        LambdaUpdateWrapper<AiModel> wrapper = new LambdaUpdateWrapper<AiModel>()
                 .set(AiModel::getDefaultModel, false)
                 .eq(AiModel::getDefaultModel, true)
                 .eq(AiModel::getModelType, modelType)
-                .ne(AiModel::getId, excludeId));
+                .ne(AiModel::getId, excludeId);
+        if (userId == null) {
+            wrapper.isNull(AiModel::getUserId);
+        } else {
+            wrapper.eq(AiModel::getUserId, userId);
+        }
+        aiModelMapper.update(null, wrapper);
     }
 
     private String extractResponseText(ChatResponse response) {

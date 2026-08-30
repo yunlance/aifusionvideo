@@ -21,6 +21,7 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { getInitStatus } from "@/lib/api/system-init";
 import { toastApiError } from "@/lib/api/toast-api-error";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { getModelDisplayParts } from "@/lib/model-display";
@@ -79,8 +80,9 @@ function isAiModelViewMode(value: string | null): value is AiModelViewMode {
 export default function AiModelsPage() {
   const { confirm } = useConfirm();
   const shouldReduceMotion = useReducedMotion();
-  // 仅管理员可操作模型/API 配置；普通用户只读
+  // 管理员可管理全局配置；普通用户在私有模式下可增删改自己的配置（后端按归属校验）
   const isAdmin = useAuthStore((s) => s.user)?.roles?.includes("admin") ?? false;
+  const [modelUseGlobal, setModelUseGlobal] = useState(false);
 
   // AI 模型列表
   const [models, setModels] = useState<AiModel[]>([]);
@@ -137,6 +139,20 @@ export default function AiModelsPage() {
       console.error("加载模型预设失败:", err);
       toastApiError(err, "加载模型预设失败");
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    getInitStatus()
+      .then((status) => {
+        if (!cancelled) setModelUseGlobal(status.modelUseGlobal);
+      })
+      .catch(() => {
+        // 忽略：读取失败时按私有模式处理
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -500,36 +516,34 @@ export default function AiModelsPage() {
                 </span>
               </Button>
             )}
-            {isAdmin && (
-              <>
-                {config.platform !== "comfyui" && (
-                  <button
-                    type="button"
-                    onClick={() => setFetchModelsConfig(config)}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl text-sky-500 transition-colors hover:bg-sky-500/10 hover:text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    title="获取可用模型列表"
-                  >
-                    <CloudDownload className="h-3.5 w-3.5" />
-                  </button>
-                )}
+            <>
+              {config.platform !== "comfyui" && (
                 <button
                   type="button"
-                  onClick={() => { setEditingConfig(config); setConfigDialogOpen(true); }}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl text-emerald-500 transition-colors hover:bg-emerald-500/10 hover:text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  title="编辑 API 配置"
+                  onClick={() => setFetchModelsConfig(config)}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl text-sky-500 transition-colors hover:bg-sky-500/10 hover:text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  title="获取可用模型列表"
                 >
-                  <Edit2 className="h-3.5 w-3.5" />
+                  <CloudDownload className="h-3.5 w-3.5" />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteConfig(config.id)}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl text-rose-500 transition-colors hover:bg-rose-500/10 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  title="删除 API 配置"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </>
-            )}
+              )}
+              <button
+                type="button"
+                onClick={() => { setEditingConfig(config); setConfigDialogOpen(true); }}
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-emerald-500 transition-colors hover:bg-emerald-500/10 hover:text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                title="编辑 API 配置"
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteConfig(config.id)}
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-rose-500 transition-colors hover:bg-rose-500/10 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                title="删除 API 配置"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </>
           </div>
         </div>
 
@@ -716,49 +730,47 @@ export default function AiModelsPage() {
                                 {testingModelIds.has(model.id) ? "检测中" : "检测"}
                               </button>
                             )}
-                            {isAdmin && (
-                              <>
-                                {!model.defaultModel && (
-                                  <button
-                                    onClick={async () => {
-                                      try {
-                                        const sameTypeModels = models.filter(m => m.modelType === model.modelType && m.defaultModel);
-                                        for (const dm of sameTypeModels) {
-                                          await aiModelApi.update({ id: dm.id, defaultModel: false });
-                                        }
-                                        await aiModelApi.update({ id: model.id, defaultModel: true });
-                                        await loadModels();
-                                      } catch (err) {
-                                        console.error("设置默认模型失败:", err);
-                                        toastApiError(err, "设置默认模型失败");
+                            <>
+                              {!model.defaultModel && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const sameTypeModels = models.filter(m => m.modelType === model.modelType && m.defaultModel);
+                                      for (const dm of sameTypeModels) {
+                                        await aiModelApi.update({ id: dm.id, defaultModel: false });
                                       }
-                                    }}
-                                    className={cn(
-                                      "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all",
-                                      "border border-amber-500/30 text-amber-500",
-                                      "hover:bg-amber-500/10 hover:border-amber-500/50"
-                                    )}
-                                  >
-                                    <Star className="h-3 w-3" />
-                                    设为默认
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => { setEditingModel(model); setModelDialogApiConfigId(undefined); setModelDialogOpen(true); }}
-                                  className="p-1 rounded-md text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10 transition-colors"
-                                  title="编辑模型"
+                                      await aiModelApi.update({ id: model.id, defaultModel: true });
+                                      await loadModels();
+                                    } catch (err) {
+                                      console.error("设置默认模型失败:", err);
+                                      toastApiError(err, "设置默认模型失败");
+                                    }
+                                  }}
+                                  className={cn(
+                                    "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all",
+                                    "border border-amber-500/30 text-amber-500",
+                                    "hover:bg-amber-500/10 hover:border-amber-500/50"
+                                  )}
                                 >
-                                  <Edit2 className="h-3 w-3" />
+                                  <Star className="h-3 w-3" />
+                                  设为默认
                                 </button>
-                                <button
-                                  onClick={() => handleDeleteModel(model.id)}
-                                  className="p-1 rounded-md text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 transition-colors"
-                                  title="删除模型"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
-                              </>
-                            )}
+                              )}
+                              <button
+                                onClick={() => { setEditingModel(model); setModelDialogApiConfigId(undefined); setModelDialogOpen(true); }}
+                                className="p-1 rounded-md text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10 transition-colors"
+                                title="编辑模型"
+                              >
+                                <Edit2 className="h-3 w-3" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteModel(model.id)}
+                                className="p-1 rounded-md text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 transition-colors"
+                                title="删除模型"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </>
                           </div>
                         </div>
                       );
@@ -768,6 +780,16 @@ export default function AiModelsPage() {
               })
             )}
 
+              <div className="mt-2 px-1">
+                <button
+                  type="button"
+                  onClick={() => { setEditingModel(null); setModelDialogApiConfigId(config.id); setModelDialogOpen(true); }}
+                  className="flex h-8 items-center gap-1.5 rounded-lg border border-dashed border-border/40 px-3 text-xs text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  添加模型
+                </button>
+              </div>
               </div>
             </motion.div>
           )}
@@ -775,6 +797,25 @@ export default function AiModelsPage() {
       </div>
     );
   };
+
+  // 全局模式下，普通用户无需（也不能）配置自己的模型
+  if (!isAdmin && modelUseGlobal) {
+    return (
+      <motion.div
+        className="w-full"
+        variants={containerVariants}
+        initial={false}
+        animate="visible"
+      >
+        <motion.div variants={itemVariants} className="rounded-xl border border-border/30 bg-card/50 backdrop-blur-sm p-6">
+          <h1 className={settingsTypography.pageTitle}>AI 配置</h1>
+          <p className={settingsTypography.pageDescription}>
+            当前系统为全局模式，所有用户统一使用管理员配置的全局模型，无需个人配置。
+          </p>
+        </motion.div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -798,37 +839,35 @@ export default function AiModelsPage() {
             API 配置与模型
           </h3>
           <div className="flex items-center gap-2 shrink-0">
-            {isAdmin && (
-              <>
-                <input
-                  ref={importInputRef}
-                  type="file"
-                  accept="application/json,.json"
-                  className="hidden"
-                  onChange={event => {
-                    const file = event.target.files?.[0];
-                    if (file) void handleImport(file);
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => importInputRef.current?.click()}
-                  className="flex h-9 items-center gap-1.5 rounded-xl border border-border/40 px-3 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                  导入
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setExportIncludeSecrets(false); setExportDialogOpen(true); }}
-                  disabled={configs.length === 0}
-                  className="flex h-9 items-center gap-1.5 rounded-xl border border-border/40 px-3 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  导出
-                </button>
-              </>
-            )}
+            <>
+              <input
+                ref={importInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={event => {
+                  const file = event.target.files?.[0];
+                  if (file) void handleImport(file);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => importInputRef.current?.click()}
+                className="flex h-9 items-center gap-1.5 rounded-xl border border-border/40 px-3 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                导入
+              </button>
+              <button
+                type="button"
+                onClick={() => { setExportIncludeSecrets(false); setExportDialogOpen(true); }}
+                disabled={configs.length === 0}
+                className="flex h-9 items-center gap-1.5 rounded-xl border border-border/40 px-3 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Download className="h-3.5 w-3.5" />
+                导出
+              </button>
+            </>
             <div
               className="flex h-9 rounded-xl border border-border/30 bg-card/50 overflow-hidden shrink-0"
               role="group"
@@ -863,7 +902,7 @@ export default function AiModelsPage() {
                 <LayoutGrid className="h-4 w-4" />
               </button>
             </div>
-            {isAdmin && configs.length === 0 && (
+            {configs.length === 0 && (
               <button
                 type="button"
                 onClick={() => { setEditingConfig(null); setConfigDialogOpen(true); }}

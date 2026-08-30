@@ -69,6 +69,9 @@ public class AiModel extends BaseEntity {
     /** 关联的 API 配置ID，指向 ApiConfig */
     private Long apiConfigId;
 
+    /** 归属用户ID；NULL 表示全局配置（管理员维护），非 NULL 表示用户私有 */
+    private Long userId;
+
     /** 关联的 ComfyUI 工作流；仅 comfyui 图片/视频模型使用 */
     private Long comfyuiWorkflowId;
 

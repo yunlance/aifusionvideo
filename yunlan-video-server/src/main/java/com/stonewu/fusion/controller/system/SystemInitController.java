@@ -40,7 +40,10 @@ public class SystemInitController {
     public CommonResult<Map<String, Boolean>> getInitStatus() {
         boolean initialized = userService.isInitialized();
         boolean allowRegister = initialized && systemConfigService.isRegistrationEnabled();
-        return success(Map.of("initialized", initialized, "allowRegister", allowRegister));
+        boolean emailRegisterEnabled = initialized && systemConfigService.isEmailRegistrationEnabled();
+        boolean modelUseGlobal = initialized && systemConfigService.getBooleanValue("model_use_global", false);
+        return success(Map.of("initialized", initialized, "allowRegister", allowRegister,
+                "emailRegisterEnabled", emailRegisterEnabled, "modelUseGlobal", modelUseGlobal));
     }
 
     @PostMapping("/setup")

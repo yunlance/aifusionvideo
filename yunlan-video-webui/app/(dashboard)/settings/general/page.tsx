@@ -33,6 +33,8 @@ interface SystemConfigs {
   site_base_url: string;
   resource_base_url: string;
   allow_register: boolean;
+  allow_email_register: boolean;
+  model_use_global: boolean;
   mail_smtp_host?: string;
   mail_smtp_port?: string;
   mail_username?: string;
@@ -84,6 +86,8 @@ export default function GeneralSettingsPage() {
     site_base_url: "",
     resource_base_url: "",
     allow_register: false,
+    allow_email_register: false,
+    model_use_global: false,
     mail_smtp_host: "",
     mail_smtp_port: "",
     mail_username: "",
@@ -95,6 +99,8 @@ export default function GeneralSettingsPage() {
     site_base_url: "",
     resource_base_url: "",
     allow_register: false,
+    allow_email_register: false,
+    model_use_global: false,
     mail_smtp_host: "",
     mail_smtp_port: "",
     mail_username: "",
@@ -161,6 +167,8 @@ export default function GeneralSettingsPage() {
           site_base_url: map.site_base_url || "",
           resource_base_url: map.resource_base_url || "",
           allow_register: map.allow_register === "true",
+          allow_email_register: map.allow_email_register === "true",
+          model_use_global: map.model_use_global === "true",
           mail_smtp_host: map.mail_smtp_host || "",
           mail_smtp_port: map.mail_smtp_port || "",
           mail_username: map.mail_username || "",
@@ -240,6 +248,8 @@ export default function GeneralSettingsPage() {
     configs.site_base_url !== original.site_base_url ||
     configs.resource_base_url !== original.resource_base_url ||
     configs.allow_register !== original.allow_register ||
+    configs.allow_email_register !== original.allow_email_register ||
+    configs.model_use_global !== original.model_use_global ||
     configs.mail_smtp_host !== original.mail_smtp_host ||
     configs.mail_smtp_port !== original.mail_smtp_port ||
     configs.mail_username !== original.mail_username ||
@@ -259,6 +269,7 @@ export default function GeneralSettingsPage() {
         site_base_url: normalizedConfigs.site_base_url,
         resource_base_url: normalizedConfigs.resource_base_url,
         allow_register: String(configs.allow_register),
+        allow_email_register: String(configs.allow_email_register),
         mail_smtp_host: configs.mail_smtp_host || "",
         mail_smtp_port: configs.mail_smtp_port || "",
         mail_username: configs.mail_username || "",
@@ -586,6 +597,109 @@ export default function GeneralSettingsPage() {
                 )}
               >
                 {configs.allow_register ? "已开启" : "未开启"}
+              </span>
+            </div>
+          </motion.div>
+
+          <motion.div
+            variants={itemVariants}
+            className="mt-6 rounded-xl border border-border/30 bg-card/50 backdrop-blur-sm p-6"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2">
+                <h3 className={settingsTypography.sectionTitle}>邮箱注册</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed max-w-[520px]">
+                  开启后，注册页将要求使用邮箱 + 验证码注册（邮箱即登录账号）。使用前需先配置下方的邮箱 SMTP 服务。
+                </p>
+              </div>
+
+              <button
+                type="button"
+                disabled={!isAdmin}
+                onClick={() => {
+                  if (!isAdmin) return;
+                  setConfigs((prev) => ({ ...prev, allow_email_register: !prev.allow_email_register }));
+                }}
+                className={cn(
+                  "relative inline-flex h-7 w-12 shrink-0 rounded-full border transition-colors",
+                  configs.allow_email_register
+                    ? "border-emerald-500/40 bg-emerald-500/20"
+                    : "border-border/40 bg-muted/30",
+                  !isAdmin ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                )}
+                aria-label="切换邮箱注册"
+                aria-pressed={configs.allow_email_register}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow transition-transform",
+                    configs.allow_email_register ? "translate-x-6" : "translate-x-0.5"
+                  )}
+                />
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-border/20 bg-muted/10 p-3 text-xs text-muted-foreground">
+              当前状态：
+              <span
+                className={cn(
+                  "ml-2 font-medium",
+                  configs.allow_email_register ? "text-emerald-600" : "text-foreground/80"
+                )}
+              >
+                {configs.allow_email_register ? "已开启" : "未开启"}
+              </span>
+            </div>
+          </motion.div>
+
+          <motion.div
+            variants={itemVariants}
+            className="mt-6 rounded-xl border border-border/30 bg-card/50 backdrop-blur-sm p-6"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2">
+                <h3 className={settingsTypography.sectionTitle}>模型使用模式</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed max-w-[520px]">
+                  关闭（默认）：每个用户使用自己的私有模型，用户可在「AI 配置」中自建渠道与模型；
+                  开启：所有用户统一使用全局模型，用户不再显示模型设置入口。
+                </p>
+              </div>
+
+              <button
+                type="button"
+                disabled={!isAdmin}
+                onClick={() => {
+                  if (!isAdmin) return;
+                  setConfigs((prev) => ({ ...prev, model_use_global: !prev.model_use_global }));
+                }}
+                className={cn(
+                  "relative inline-flex h-7 w-12 shrink-0 rounded-full border transition-colors",
+                  configs.model_use_global
+                    ? "border-emerald-500/40 bg-emerald-500/20"
+                    : "border-border/40 bg-muted/30",
+                  !isAdmin ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                )}
+                aria-label="切换模型使用模式"
+                aria-pressed={configs.model_use_global}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow transition-transform",
+                    configs.model_use_global ? "translate-x-6" : "translate-x-0.5"
+                  )}
+                />
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-border/20 bg-muted/10 p-3 text-xs text-muted-foreground">
+              当前状态：
+              <span
+                className={cn(
+                  "ml-2 font-medium",
+                  configs.model_use_global ? "text-emerald-600" : "text-foreground/80"
+                )}
+              >
+                {configs.model_use_global ? "全局模式（统一用全局模型）" : "私有模式（每人用自己的模型）"}
               </span>
             </div>
           </motion.div>

@@ -31,7 +31,6 @@ public class AiModelController {
 
     @PostMapping("/create")
     @Operation(summary = "创建AI模型")
-    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<Long> create(@Valid @RequestBody AiModelCreateReqVO reqVO) {
         AiModel model = AiModel.builder()
                 .name(reqVO.getName())
@@ -60,7 +59,6 @@ public class AiModelController {
 
     @PutMapping("/update")
     @Operation(summary = "更新AI模型")
-    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<Boolean> update(@Valid @RequestBody AiModelUpdateReqVO reqVO) {
         aiModelService.updateAiModel(reqVO.getId(), reqVO.getName(), reqVO.getCode(),
                 reqVO.getModelProtocol(), reqVO.getCapabilityPresetCode(), reqVO.getModelType(),
@@ -75,7 +73,6 @@ public class AiModelController {
 
     @DeleteMapping("/delete")
     @Operation(summary = "删除AI模型")
-    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<Boolean> delete(@RequestParam("id") Long id) {
         aiModelService.deleteAiModel(id);
         return success(true);
@@ -91,7 +88,6 @@ public class AiModelController {
 
     @GetMapping("/page")
     @Operation(summary = "AI模型分页列表")
-    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<PageResult<AiModelRespVO>> page(@Valid AiModelPageReqVO reqVO) {
         return success(aiModelService.getPage(reqVO.getName(), reqVO.getCode(),
                 reqVO.getModelType(), reqVO.getStatus(), reqVO.getPageNo(), reqVO.getPageSize())
@@ -131,7 +127,6 @@ public class AiModelController {
     @PostMapping("/test-text-connectivity")
     @Operation(summary = "检测文本模型连通性")
     @Parameter(name = "id", description = "模型ID", required = true)
-    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<AiModelConnectivityRespVO> testTextConnectivity(@RequestParam("id") Long id) {
         return success(aiModelService.testTextModelConnectivity(id));
     }

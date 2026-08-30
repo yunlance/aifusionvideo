@@ -20,7 +20,7 @@ import java.sql.Statement;
  * 本初始化器再确保「管理员账号」与「影视演示项目/分镜/镜头」存在：
  * <ul>
  *   <li>管理员：若不存在则写入；密码取自环境变量 ADMIN_PASSWORD（bcrypt 后入库），
- *       未配置时使用内置默认哈希，已存在则不覆盖。</li>
+ *       未配置时回退到与二次开发库一致的默认哈希，已存在则不覆盖。</li>
  *   <li>演示项目：复用 Flyway 迁移 V1.1.2.0.0 的 SQL，依赖管理员归属人，
  *       全部以 NOT EXISTS 幂等插入，删除后重启会自动补回。</li>
  * </ul>
@@ -32,7 +32,7 @@ import java.sql.Statement;
 public class DataInitializer implements CommandLineRunner {
 
     /**
-     * 未配置 ADMIN_PASSWORD 时使用的默认 admin 密码哈希。
+     * 与二次开发库一致的默认 admin 密码哈希，仅在未配置 ADMIN_PASSWORD 时使用。
      */
     private static final String DEFAULT_ADMIN_HASH =
             "$2a$10$VfUPbAYQ5qIwezFXAprcVeKaFuiPWX7tqHjk7.cfox.sAXcS/8Xjy";

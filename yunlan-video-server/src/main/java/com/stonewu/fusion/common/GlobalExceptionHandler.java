@@ -54,6 +54,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public CommonResult<?> handleAccessDeniedException(AccessDeniedException e) {
+        log.warn("访问被拒绝(AccessDeniedException): {}", e.getMessage(), e);
         return CommonResult.error(403, "没有权限访问");
     }
 

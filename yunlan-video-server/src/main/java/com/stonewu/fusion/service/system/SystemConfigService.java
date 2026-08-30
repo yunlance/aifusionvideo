@@ -112,6 +112,20 @@ public class SystemConfigService {
     }
 
     /**
+     * 是否开启邮箱验证码注册。
+     */
+    public boolean isEmailRegistrationEnabled() {
+        return getBooleanValue("allow_email_register", false);
+    }
+
+    /**
+     * 设置是否开启邮箱验证码注册。
+     */
+    public void setEmailRegistrationEnabled(boolean enabled) {
+        setValue("allow_email_register", Boolean.toString(enabled));
+    }
+
+    /**
      * 将相对路径解析为完整的公网可访问 URL
      * <p>
      * 1. 已是完整 URL (http/https) → 直接返回

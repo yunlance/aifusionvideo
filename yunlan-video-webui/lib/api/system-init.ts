@@ -7,6 +7,8 @@ import type { LoginRespVO } from "./types";
 export interface InitStatusResp {
   initialized: boolean;
   allowRegister: boolean;
+  emailRegisterEnabled: boolean;
+  modelUseGlobal: boolean;
 }
 
 // 初始化管理员请求类型

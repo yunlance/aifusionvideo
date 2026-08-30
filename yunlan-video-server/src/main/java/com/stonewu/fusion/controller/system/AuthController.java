@@ -30,6 +30,7 @@ import com.stonewu.fusion.controller.system.vo.ProfileUpdateReqVO;
 import com.stonewu.fusion.controller.system.vo.ChangePasswordReqVO;
 import com.stonewu.fusion.controller.system.vo.PasswordResetRequestVO;
 import com.stonewu.fusion.controller.system.vo.PasswordResetSubmitVO;
+import com.stonewu.fusion.service.ai.DefaultProviderInitializer;
 import com.stonewu.fusion.service.team.TeamService;
 import com.stonewu.fusion.service.system.UserService;
 import com.stonewu.fusion.service.system.MailService;
@@ -40,7 +41,9 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import static com.stonewu.fusion.common.CommonResult.success;
 
@@ -61,6 +64,10 @@ public class AuthController {
     private final StringRedisTemplate stringRedisTemplate;
     private final MailService mailService;
     private final SystemConfigService systemConfigService;
+    private final DefaultProviderInitializer defaultProviderInitializer;
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final String EMAIL_CODE_KEY_PREFIX = "auth:email-code:";
 
     @PostMapping("/login")
     @Operation(summary = "登录")
@@ -72,8 +79,26 @@ public class AuthController {
         TokenService.TokenPair tokenPair = tokenService.createToken(userDetails.getUserId(), userDetails.getUsername(),
                 currentTeamId);
 
+        // 普通用户登录成功后自动补齐默认私有配置（幂等；存量用户首次登录也会补发）
+        ensureDefaultProviderForLogin(userDetails);
         User user = userService.getById(userDetails.getUserId());
         return success(buildLoginResp(tokenPair, user));
+    }
+
+    /**
+     * 普通用户登录成功后，若无私有配置则自动预置默认渠道/模型（幂等，存量用户也会补齐）。
+     * 管理员不做预置（管理员维护全局配置）。
+     */
+    private void ensureDefaultProviderForLogin(SecurityUserDetails userDetails) {
+        if (userDetails.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()))) {
+            return;
+        }
+        try {
+            defaultProviderInitializer.initForUser(userDetails.getUserId());
+        } catch (Exception e) {
+            log.warn("登录预置默认渠道失败: {}", e.getMessage());
+        }
     }
 
     @PostMapping("/register")
@@ -82,10 +107,85 @@ public class AuthController {
         if (!reqVO.getPassword().equals(reqVO.getConfirmPassword())) {
             throw new BusinessException(400, "两次输入的密码不一致");
         }
-        User user = userService.register(reqVO.getUsername(), reqVO.getPassword(), reqVO.getNickname());
+        User user;
+        if (systemConfigService.isEmailRegistrationEnabled()) {
+            // 邮箱验证码注册模式：邮箱即账号
+            String email = reqVO.getEmail() == null ? null : reqVO.getEmail().trim().toLowerCase();
+            if (StrUtil.isBlank(email)) {
+                throw new BusinessException(400, "请输入邮箱地址");
+            }
+            if (!EMAIL_PATTERN.matcher(email).matches()) {
+                throw new BusinessException(400, "邮箱格式不正确");
+            }
+            String code = reqVO.getVerifyCode() == null ? null : reqVO.getVerifyCode().trim();
+            if (StrUtil.isBlank(code)) {
+                throw new BusinessException(400, "请输入邮箱验证码");
+            }
+            String savedCode = stringRedisTemplate.opsForValue().get(EMAIL_CODE_KEY_PREFIX + email);
+            if (StrUtil.isBlank(savedCode) || !savedCode.equals(code)) {
+                throw new BusinessException(400, "验证码错误或已过期");
+            }
+            user = userService.register(email, reqVO.getPassword(), reqVO.getNickname(), email);
+            // 注册成功，清除验证码
+            stringRedisTemplate.delete(EMAIL_CODE_KEY_PREFIX + email);
+        } else {
+            if (StrUtil.isBlank(reqVO.getUsername())) {
+                throw new BusinessException(400, "请输入用户名");
+            }
+            user = userService.register(reqVO.getUsername(), reqVO.getPassword(), reqVO.getNickname(), null);
+        }
         Long currentTeamId = teamService.getCurrentTeamIdByUser(user.getId());
         TokenService.TokenPair tokenPair = tokenService.createToken(user.getId(), user.getUsername(), currentTeamId);
         return success(buildLoginResp(tokenPair, user));
+    }
+
+    @PostMapping("/send-email-code")
+    @Operation(summary = "发送邮箱注册验证码")
+    public CommonResult<Boolean> sendEmailCode(@Valid @RequestBody SendEmailCodeReqVO reqVO) {
+        if (!systemConfigService.isEmailRegistrationEnabled()) {
+            throw new BusinessException(400, "系统未开启邮箱注册");
+        }
+        String email = reqVO.getEmail() == null ? null : reqVO.getEmail().trim().toLowerCase();
+        if (StrUtil.isBlank(email) || !EMAIL_PATTERN.matcher(email).matches()) {
+            throw new BusinessException(400, "邮箱格式不正确");
+        }
+        if (userService.getByUsernameOrEmail(email) != null) {
+            throw new BusinessException(400, "该邮箱已被注册");
+        }
+        // 60 秒发送频率限制
+        String freqKey = "auth:email-code-sent:" + email;
+        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(freqKey))) {
+            throw new BusinessException(400, "发送过于频繁，请 60 秒后再试");
+        }
+        // 校验邮件服务配置
+        if (StrUtil.isBlank(systemConfigService.getValue("mail_smtp_host"))) {
+            throw new BusinessException(400, "系统邮箱服务未配置，请联系管理员配置邮箱参数");
+        }
+        // 生成 6 位数字验证码
+        String code = String.format("%06d", ThreadLocalRandom.current().nextInt(1000000));
+        stringRedisTemplate.opsForValue().set(EMAIL_CODE_KEY_PREFIX + email, code, 5, TimeUnit.MINUTES);
+        stringRedisTemplate.opsForValue().set(freqKey, "1", 60, TimeUnit.SECONDS);
+        // 发送验证码邮件
+        String emailContent = String.format(
+                "<div style='font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px;'>"
+                        + "  <h2 style='color: #333;'>云揽镜 · 邮箱注册验证码</h2>"
+                        + "  <p>您好：</p>"
+                        + "  <p>您正在使用邮箱 %s 注册云揽镜账号，本次操作的验证码为：</p>"
+                        + "  <p style='font-size: 28px; font-weight: bold; letter-spacing: 6px; color: #000; margin: 24px 0;'>%s</p>"
+                        + "  <p style='color: #999; font-size: 12px;'>验证码 5 分钟内有效。如果这不是您的操作，请忽略此邮件。</p>"
+                        + "</div>",
+                email, code);
+        mailService.sendHtmlEmail(email, "【云揽镜】邮箱注册验证码", emailContent);
+        return success(true);
+    }
+
+    /**
+     * 发送邮箱验证码请求
+     */
+    @Data
+    public static class SendEmailCodeReqVO {
+        @NotBlank(message = "邮箱不能为空")
+        private String email;
     }
 
     @PostMapping("/refresh")

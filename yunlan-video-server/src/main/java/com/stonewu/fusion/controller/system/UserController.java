@@ -7,6 +7,10 @@ import com.stonewu.fusion.controller.system.vo.UserRespVO;
 import com.stonewu.fusion.convert.system.UserConvert;
 import com.stonewu.fusion.entity.system.Role;
 import com.stonewu.fusion.entity.system.User;
+import com.stonewu.fusion.convert.ai.AiModelConvert;
+import com.stonewu.fusion.convert.ai.ApiConfigConvert;
+import com.stonewu.fusion.service.ai.AiModelService;
+import com.stonewu.fusion.service.ai.ApiConfigService;
 import com.stonewu.fusion.service.system.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.stonewu.fusion.common.CommonResult.success;
 
@@ -27,6 +32,8 @@ import static com.stonewu.fusion.common.CommonResult.success;
 public class UserController {
 
     private final UserService userService;
+    private final ApiConfigService apiConfigService;
+    private final AiModelService aiModelService;
 
     @GetMapping("/page")
     @Operation(summary = "获取用户分页列表")
@@ -83,6 +90,19 @@ public class UserController {
                                             @RequestParam("roleId") Long roleId) {
         userService.removeRole(userId, roleId);
         return success(true);
+    }
+
+    @GetMapping("/{userId}/model-configs")
+    @Operation(summary = "获取用户私有渠道与模型配置（总后台用户设置管理）")
+    @Parameter(name = "userId", description = "用户ID", required = true)
+    @PreAuthorize("hasRole('ADMIN')")
+    public CommonResult<Map<String, Object>> getUserModelConfigs(@PathVariable("userId") Long userId) {
+        return success(Map.of(
+                "apiConfigs", apiConfigService.listByUserId(userId).stream()
+                        .map(ApiConfigConvert.INSTANCE::convert).toList(),
+                "models", aiModelService.listByUserId(userId).stream()
+                        .map(AiModelConvert.INSTANCE::convert).toList()
+        ));
     }
 
     /**

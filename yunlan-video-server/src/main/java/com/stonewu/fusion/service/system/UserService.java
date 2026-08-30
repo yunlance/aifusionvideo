@@ -11,6 +11,7 @@ import com.stonewu.fusion.enums.team.TeamMemberRoleEnum;
 import com.stonewu.fusion.mapper.system.RoleMapper;
 import com.stonewu.fusion.mapper.system.UserMapper;
 import com.stonewu.fusion.mapper.system.UserRoleMapper;
+import com.stonewu.fusion.service.ai.DefaultProviderInitializer;
 import com.stonewu.fusion.service.team.TeamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -34,18 +35,21 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final SystemConfigService systemConfigService;
     private final TeamService teamService;
+    private final DefaultProviderInitializer defaultProviderInitializer;
 
     @Transactional
-    public User register(String username, String password, String nickname) {
+    public User register(String username, String password, String nickname, String email) {
         if (!isInitialized()) {
             throw new BusinessException(400, "系统尚未初始化，请先完成管理员初始化");
         }
         if (!systemConfigService.isRegistrationEnabled()) {
             throw new BusinessException(400, "系统未开放注册");
         }
-        User user = createUser(username, password, nickname);
+        User user = createUser(username, password, nickname, email);
         assignRoleIfPresent(user.getId(), USER_ROLE_CODE);
         teamService.addUserToSingleTeam(user.getId(), TeamMemberRoleEnum.MEMBER.getRole());
+        // 自动预置默认渠道/模型（幂等）
+        defaultProviderInitializer.initForUser(user.getId());
         return user;
     }
 
@@ -54,7 +58,7 @@ public class UserService {
         if (isInitialized()) {
             throw new BusinessException(400, "系统已初始化，请勿重复操作");
         }
-        User user = createUser(username, password, nickname);
+        User user = createUser(username, password, nickname, null);
         assignRoleIfPresent(user.getId(), ADMIN_ROLE_CODE);
         assignRoleIfPresent(user.getId(), USER_ROLE_CODE);
         teamService.createInitialTeam(username + "的团队", user.getId());
@@ -183,7 +187,7 @@ public class UserService {
                 .eq(UserRole::getRoleId, roleId));
     }
 
-    private User createUser(String username, String password, String nickname) {
+    private User createUser(String username, String password, String nickname, String email) {
         boolean exists = userMapper.exists(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
         if (exists) {
             throw new BusinessException(400, "用户名已存在");
@@ -192,6 +196,7 @@ public class UserService {
                 .username(username)
                 .password(passwordEncoder.encode(password))
                 .nickname(nickname != null ? nickname : username)
+                .email(email)
                 .status(1)
                 .build();
         userMapper.insert(user);

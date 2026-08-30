@@ -130,7 +130,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-This command builds the images automatically and starts MySQL, Redis, the backend, the frontend, and Nginx. You do not need `--build`.
+This command pulls the prebuilt images and starts MySQL, Redis, the backend, the frontend, and Nginx.
 
 To customize ports or passwords, edit the root `.env` file. Git ignores this file, so later project updates do not require changes to `docker-compose.yml`. Set `ADMIN_PASSWORD` in `.env` before deployment.
 
@@ -164,8 +164,16 @@ BACKEND_PORT=15858
 
 Set `PUBLIC_API_URL` to the backend root URL without a trailing `/api`. The backend allows cross-origin requests globally by default. In production, restrict `CORS_ALLOWED_ORIGIN_PATTERNS` to the actual frontend origins as shown above; separate multiple origins with commas.
 
+Use the prebuilt images:
+
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.separated.yml up -d
+```
+
+Build the images from source:
+
+```bash
+docker compose -f docker-compose.build.yml -f docker-compose.separated.yml up -d --build
 ```
 
 Separate frontend and backend deployment leaves the repository's built-in Nginx service disabled. Configure an HTTPS reverse proxy for each service, then open `Settings > General` and confirm the site public URL and backend resource public URL.
@@ -264,8 +272,9 @@ The site public URL is used for password reset emails and page links, while the 
 ├─ yunlan-video-server/       Java backend, Flyway migrations, and backend tests
 ├─ yunlan-video-webui/   Next.js frontend
 ├─ docker/                Nginx configuration
-├─ docker-compose.yml     Local source build deployment
-└─ docker-compose.separated.yml
+├─ docker-compose.yml           Pulls the prebuilt images
+├─ docker-compose.build.yml     Local source build deployment
+└─ docker-compose.separated.yml Separate frontend/backend override
 ```
 
 ## Checks and tests

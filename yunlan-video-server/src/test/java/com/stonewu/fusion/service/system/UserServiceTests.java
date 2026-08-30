@@ -60,7 +60,7 @@ class UserServiceTests {
         when(userRoleMapper.exists(any(LambdaQueryWrapper.class))).thenReturn(false);
 
         BusinessException exception = assertThrows(BusinessException.class,
-                () -> userService.register("stone", "secret123", null));
+                () -> userService.register("stone", "secret123", null, null));
 
         assertEquals(400, exception.getCode());
         assertEquals("系统尚未初始化，请先完成管理员初始化", exception.getMessage());
@@ -74,7 +74,7 @@ class UserServiceTests {
         when(systemConfigService.isRegistrationEnabled()).thenReturn(false);
 
         BusinessException exception = assertThrows(BusinessException.class,
-                () -> userService.register("stone", "secret123", null));
+                () -> userService.register("stone", "secret123", null, null));
 
         assertEquals(400, exception.getCode());
         assertEquals("系统未开放注册", exception.getMessage());
@@ -89,7 +89,7 @@ class UserServiceTests {
         when(systemConfigService.isRegistrationEnabled()).thenReturn(true);
         when(userMapper.exists(any(LambdaQueryWrapper.class))).thenReturn(false);
 
-        User user = userService.register("stone", "secret123", null);
+        User user = userService.register("stone", "secret123", null, null);
 
         assertEquals(100L, user.getId());
         assertEquals("stone", user.getUsername());

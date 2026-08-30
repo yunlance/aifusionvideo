@@ -15,10 +15,12 @@ export interface LoginReqVO {
 
 // 注册请求
 export interface RegisterReqVO {
-  username: string;
+  username?: string;
   password: string;
   confirmPassword: string;
   nickname?: string;
+  email?: string;
+  verifyCode?: string;
 }
 
 // 登录响应

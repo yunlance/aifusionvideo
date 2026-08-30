@@ -10,6 +10,7 @@ import com.stonewu.fusion.entity.ai.AiModel;
 import com.stonewu.fusion.entity.ai.ApiConfig;
 import com.stonewu.fusion.mapper.ai.AiModelMapper;
 import com.stonewu.fusion.service.ai.comfyui.ComfyUiWorkflowService;
+import com.stonewu.fusion.service.ai.ModelAccessResolver;
 import com.stonewu.fusion.service.ai.model.AiModelMetadataResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
@@ -61,6 +62,9 @@ class AiModelServiceTests {
     @Mock
     private ComfyUiWorkflowService comfyUiWorkflowService;
 
+    @Mock
+    private ModelAccessResolver modelAccessResolver;
+
     private AiModelService aiModelService;
 
     @BeforeEach
@@ -69,6 +73,7 @@ class AiModelServiceTests {
                 aiModelMapper,
                 apiConfigService,
                 modelPresetService,
+                modelAccessResolver,
                 new AiModelMetadataResolver(apiConfigService),
                 chatModelFactory,
                 comfyUiWorkflowService

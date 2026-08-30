@@ -36,7 +36,6 @@ public class ApiConfigController {
 
     @PostMapping("/create")
     @Operation(summary = "创建API配置")
-    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<Long> create(@Valid @RequestBody ApiConfigSaveReqVO reqVO) {
         ApiConfig config = ApiConfig.builder()
                 .name(reqVO.getName()).platform(reqVO.getPlatform())
@@ -59,7 +58,6 @@ public class ApiConfigController {
 
     @PutMapping("/update")
     @Operation(summary = "更新API配置")
-    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<Boolean> update(@Valid @RequestBody ApiConfigSaveReqVO reqVO) {
         apiConfigService.updateApiConfig(reqVO.getId(), reqVO.getName(), reqVO.getPlatform(),
             reqVO.getTextProtocol(), reqVO.getImageProtocol(), reqVO.getVideoProtocol(),
@@ -72,7 +70,6 @@ public class ApiConfigController {
 
     @DeleteMapping("/delete")
     @Operation(summary = "删除API配置")
-    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<Boolean> delete(@RequestParam("id") Long id) {
         apiConfigService.deleteApiConfig(id);
         return success(true);
@@ -88,7 +85,6 @@ public class ApiConfigController {
 
     @GetMapping("/page")
     @Operation(summary = "API配置分页列表")
-    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<PageResult<ApiConfigRespVO>> page(@Valid ApiConfigPageReqVO reqVO) {
         return success(apiConfigService.getPage(reqVO.getName(), reqVO.getPlatform(),
                 reqVO.getStatus(), reqVO.getPageNo(), reqVO.getPageSize())
@@ -104,14 +100,12 @@ public class ApiConfigController {
     @GetMapping("/remote-models")
     @Operation(summary = "获取远程可用模型列表")
     @Parameter(name = "id", description = "API配置ID", required = true)
-    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<List<RemoteModelVO>> remoteModels(@RequestParam("id") Long id) {
         return success(aiProviderService.listRemoteModels(id));
     }
 
     @PostMapping("/test-comfyui-connectivity")
     @Operation(summary = "检测 ComfyUI Native API 连接")
-    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<ComfyUiConnectionRespVO> testComfyUiConnectivity(
             @RequestParam("id") Long id) {
         return success(comfyUiWorkflowValidationService.testConnection(id));

@@ -80,6 +80,9 @@ public class ApiConfig extends BaseEntity {
     /** 关联模型ID */
     private Long modelId;
 
+    /** 归属用户ID；NULL 表示全局配置（管理员维护），非 NULL 表示用户私有 */
+    private Long userId;
+
     /** 状态：0-禁用 1-启用 */
     @Builder.Default
     private Integer status = 1;

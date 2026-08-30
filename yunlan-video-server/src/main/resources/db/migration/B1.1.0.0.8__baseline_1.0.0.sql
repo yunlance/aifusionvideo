@@ -805,6 +805,7 @@ CREATE TABLE `afv_system_config` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 INSERT INTO `afv_system_config` VALUES (1,'allow_register','false','是否允许公开注册',0,'2026-08-03 02:11:43','2026-08-03 02:11:43');
+INSERT INTO `afv_system_config` VALUES (2,'allow_email_register','false','是否开启邮箱验证码注册（开启后注册须使用邮箱+验证码）',0,'2026-08-03 02:11:43','2026-08-03 02:11:43');
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `afv_team` (

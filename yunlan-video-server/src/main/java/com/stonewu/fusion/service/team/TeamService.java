@@ -9,6 +9,8 @@ import com.stonewu.fusion.entity.team.TeamMember;
 import com.stonewu.fusion.enums.team.TeamMemberRoleEnum;
 import com.stonewu.fusion.mapper.team.TeamMemberMapper;
 import com.stonewu.fusion.mapper.team.TeamMapper;
+import com.stonewu.fusion.mapper.system.UserMapper;
+import com.stonewu.fusion.entity.system.User;
 import com.stonewu.fusion.security.SecurityUtils;
 import com.stonewu.fusion.security.TokenService;
 import lombok.AllArgsConstructor;
@@ -30,6 +32,7 @@ public class TeamService {
     private final TeamMapper teamMapper;
     private final TeamMemberMapper teamMemberMapper;
     private final TokenService tokenService;
+    private final UserMapper userMapper;
 
     @Data
     @AllArgsConstructor
@@ -63,9 +66,33 @@ public class TeamService {
     public Team getRequiredSingleTeam() {
         Team team = getSingleTeam();
         if (team == null) {
+            // 兜底：系统存在用户但团队缺失时（如历史数据/异常初始化），自动补建
+            team = autoCreateFallbackTeam();
+        }
+        if (team == null) {
             throw new BusinessException(500, "默认团队不存在，请先完成管理员初始化");
         }
         return team;
+    }
+
+    /**
+     * 兜底补建：当系统中没有任何团队但存在用户时，以第一个启用用户为创建者自动补建默认团队。
+     * 幂等：若已有团队则直接返回。
+     */
+    @Transactional
+    public Team autoCreateFallbackTeam() {
+        Team existing = getSingleTeam();
+        if (existing != null) {
+            return existing;
+        }
+        User firstUser = userMapper.selectOne(new LambdaQueryWrapper<User>()
+                .eq(User::getDeleted, false)
+                .orderByAsc(User::getId)
+                .last("LIMIT 1"));
+        if (firstUser == null) {
+            return null;
+        }
+        return createTeamRecord("默认团队", null, firstUser.getId(), TeamMemberRoleEnum.OWNER.getRole());
     }
 
     public Long getCurrentTeamIdByUser(Long userId) {

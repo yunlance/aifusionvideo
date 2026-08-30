@@ -19,6 +19,7 @@ import com.stonewu.fusion.mapper.storyboard.StoryboardMapper;
 import com.stonewu.fusion.mapper.storyboard.StoryboardSceneMapper;
 import com.stonewu.fusion.service.storyboard.dto.StoryboardItemAssetsPatch;
 import com.stonewu.fusion.service.storyboard.dto.StoryboardStatistics;
+import com.stonewu.fusion.service.project.ProjectService;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,6 +70,9 @@ class StoryboardServiceTests {
     @Mock
     private ScriptEpisodeMapper scriptEpisodeMapper;
 
+    @Mock
+    private ProjectService projectService;
+
     private StoryboardService storyboardService;
 
     @BeforeEach
@@ -79,7 +83,8 @@ class StoryboardServiceTests {
                 sceneMapper,
                 itemMapper,
                 scriptMapper,
-                scriptEpisodeMapper
+                scriptEpisodeMapper,
+                projectService
         );
     }
 

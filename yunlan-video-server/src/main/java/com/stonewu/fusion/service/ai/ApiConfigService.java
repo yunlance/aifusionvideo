@@ -8,6 +8,7 @@ import com.stonewu.fusion.common.BusinessException;
 import com.stonewu.fusion.entity.ai.ApiConfig;
 import com.stonewu.fusion.mapper.ai.ApiConfigMapper;
 import com.stonewu.fusion.service.ai.proxy.AiProxySupport;
+import com.stonewu.fusion.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class ApiConfigService {
 
     private final ApiConfigMapper apiConfigMapper;
     private final ObjectProvider<ChatModelFactory> chatModelFactoryProvider;
+    private final ModelAccessResolver modelAccessResolver;
 
     /** 允许接入的平台白名单（包内可见，供模型绑定校验使用） */
     static final Set<String> ALLOWED_PLATFORMS = Set.of("newapi", "comfyui");
@@ -32,11 +34,25 @@ public class ApiConfigService {
         if (StrUtil.isBlank(apiConfig.getPlatform())) {
             apiConfig.setPlatform("newapi");
         }
-        // 产品锁定：同一平台仅允许存在 1 条启用的 API 配置（云揽川 为唯一聚合渠道）
+        // 归属设置：普通用户创建的渠道归属自己；管理员在全局模式下维护全局渠道、私有模式下维护自己的私有渠道
+        if (modelAccessResolver.isAdmin()) {
+            apiConfig.setUserId(modelAccessResolver.isGlobalMode() ? null : SecurityUtils.requireCurrentUserId());
+        } else {
+            apiConfig.setUserId(SecurityUtils.requireCurrentUserId());
+        }
+        // 同一用户（全局为 null）同一平台仅允许存在 1 条启用的配置
+        Long currentUserId = apiConfig.getUserId();
         long enabledCount = apiConfigMapper.selectCount(
                 new LambdaQueryWrapper<ApiConfig>()
                         .eq(ApiConfig::getStatus, 1)
-                        .eq(ApiConfig::getPlatform, apiConfig.getPlatform()));
+                        .eq(ApiConfig::getPlatform, apiConfig.getPlatform())
+                        .and(w -> {
+                            if (currentUserId == null) {
+                                w.isNull(ApiConfig::getUserId);
+                            } else {
+                                w.eq(ApiConfig::getUserId, currentUserId);
+                            }
+                        }));
         if (enabledCount > 0) {
             throw new BusinessException(400, "已存在该平台的启用配置，无需重复创建");
         }
@@ -64,6 +80,7 @@ public class ApiConfigService {
                                  Long modelId, Integer status, String remark) {
         ApiConfig config = apiConfigMapper.selectById(id);
         if (config == null) throw new BusinessException(404, "API配置不存在");
+        modelAccessResolver.assertOwned(config);
         String effectivePlatform = platform != null ? platform : config.getPlatform();
         validatePlatform(effectivePlatform);
         if (name != null) config.setName(name);
@@ -97,43 +114,97 @@ public class ApiConfigService {
 
     @Transactional
     public void deleteApiConfig(Long id) {
+        ApiConfig config = apiConfigMapper.selectById(id);
+        if (config == null) {
+            throw new BusinessException(404, "API配置不存在");
+        }
+        modelAccessResolver.assertOwned(config);
         apiConfigMapper.deleteById(id);
         evictModelCaches();
     }
 
+    /**
+     * 查询指定用户私有渠道列表（供总后台用户设置管理使用）。
+     */
+    public List<ApiConfig> listByUserId(Long userId) {
+        return apiConfigMapper.selectList(new LambdaQueryWrapper<ApiConfig>()
+                .eq(ApiConfig::getUserId, userId)
+                .orderByDesc(ApiConfig::getId));
+    }
+
     public ApiConfig getById(Long id) {
-        return apiConfigMapper.selectById(id);
+        ApiConfig config = apiConfigMapper.selectById(id);
+        modelAccessResolver.assertVisible(config);
+        return config;
     }
 
     public PageResult<ApiConfig> getPage(String name, String platform, Integer status, int pageNo, int pageSize) {
         LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(name != null, ApiConfig::getName, name)
                 .eq(platform != null, ApiConfig::getPlatform, platform)
-                .eq(status != null, ApiConfig::getStatus, status)
-                .orderByDesc(ApiConfig::getId);
+                .eq(status != null, ApiConfig::getStatus, status);
+        applyVisibleScope(wrapper);
+        wrapper.orderByDesc(ApiConfig::getId);
         return PageResult.of(apiConfigMapper.selectPage(new Page<>(pageNo, pageSize), wrapper));
     }
 
+    /**
+     * 按当前模式/角色限定可见范围（管理分页用）：管理员可见全部；普通用户仅可见当前模式下自己的渠道。
+     */
+    private void applyVisibleScope(LambdaQueryWrapper<ApiConfig> wrapper) {
+        if (modelAccessResolver.isAdmin()) {
+            return;
+        }
+        if (modelAccessResolver.isGlobalMode()) {
+            wrapper.isNull(ApiConfig::getUserId);
+        } else {
+            wrapper.eq(ApiConfig::getUserId, SecurityUtils.getCurrentUserId());
+        }
+    }
+
+    /**
+     * 生成/选择场景的可见范围（管理员也按模式过滤，符合"管理员也是用户"）：
+     * 全局模式用全局渠道；私有模式用当前用户私有渠道；无登录上下文（如异步任务）时回退全局渠道。
+     */
+    private void applyGenerationScope(LambdaQueryWrapper<ApiConfig> wrapper) {
+        if (modelAccessResolver.isGlobalMode()) {
+            wrapper.isNull(ApiConfig::getUserId);
+        } else {
+            Long userId = SecurityUtils.getCurrentUserId();
+            if (userId != null) {
+                wrapper.eq(ApiConfig::getUserId, userId);
+            } else {
+                wrapper.isNull(ApiConfig::getUserId);
+            }
+        }
+    }
+
     public List<ApiConfig> getEnabledList() {
-        return apiConfigMapper.selectList(new LambdaQueryWrapper<ApiConfig>().eq(ApiConfig::getStatus, 1));
+        LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<ApiConfig>().eq(ApiConfig::getStatus, 1);
+        applyGenerationScope(wrapper);
+        return apiConfigMapper.selectList(wrapper);
     }
 
     /**
      * 按平台标识获取启用的 API 配置列表
      */
     public List<ApiConfig> getListByPlatform(String platform) {
-        return apiConfigMapper.selectList(new LambdaQueryWrapper<ApiConfig>()
+        LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<ApiConfig>()
                 .eq(ApiConfig::getStatus, 1)
-                .eq(ApiConfig::getPlatform, platform));
+                .eq(ApiConfig::getPlatform, platform);
+        applyGenerationScope(wrapper);
+        return apiConfigMapper.selectList(wrapper);
     }
 
     /**
      * 按多个平台标识获取启用的 API 配置列表
      */
     public List<ApiConfig> getListByPlatforms(List<String> platforms) {
-        return apiConfigMapper.selectList(new LambdaQueryWrapper<ApiConfig>()
+        LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<ApiConfig>()
                 .eq(ApiConfig::getStatus, 1)
-                .in(ApiConfig::getPlatform, platforms));
+                .in(ApiConfig::getPlatform, platforms);
+        applyGenerationScope(wrapper);
+        return apiConfigMapper.selectList(wrapper);
     }
 
     private String normalizeApiUrl(String platform, String apiUrl) {

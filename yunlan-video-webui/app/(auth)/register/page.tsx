@@ -9,7 +9,7 @@ import { AuthLayout } from "@/components/ui/auth-layout";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { getInitStatus } from "@/lib/api/system-init";
 import { getApiErrorMessage } from "@/lib/api/api-error";
-import { register as registerApi } from "@/lib/api/auth";
+import { register as registerApi, sendEmailCode } from "@/lib/api/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -22,6 +22,11 @@ export default function RegisterPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [initReady, setInitReady] = useState(false);
   const [allowRegister, setAllowRegister] = useState(false);
+  const [emailRegisterEnabled, setEmailRegisterEnabled] = useState(false);
+  const [email, setEmail] = useState("");
+  const [verifyCode, setVerifyCode] = useState("");
+  const [countdown, setCountdown] = useState(0);
+  const [sendingCode, setSendingCode] = useState(false);
 
   useEffect(() => {
     getInitStatus()
@@ -31,6 +36,7 @@ export default function RegisterPage() {
           return;
         }
         setAllowRegister(status.allowRegister);
+        setEmailRegisterEnabled(!!status.emailRegisterEnabled);
         setInitReady(true);
       })
       .catch((error) => {
@@ -39,9 +45,21 @@ export default function RegisterPage() {
       });
   }, [router]);
 
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown((prev) => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
   const validate = (): string | null => {
-    if (!username.trim()) return "请输入用户名";
-    if (username.trim().length < 3) return "用户名至少 3 个字符";
+    if (emailRegisterEnabled) {
+      if (!email.trim()) return "请输入邮箱地址";
+      if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email.trim())) return "邮箱格式不正确";
+      if (!verifyCode.trim()) return "请输入邮箱验证码";
+    } else {
+      if (!username.trim()) return "请输入用户名";
+      if (username.trim().length < 3) return "用户名至少 3 个字符";
+    }
     if (!password) return "请输入密码";
     if (password.length < 6) return "密码至少 6 位";
     if (password !== confirmPassword) return "两次输入的密码不一致";
@@ -49,9 +67,36 @@ export default function RegisterPage() {
   };
 
   const isFormValid =
-    username.trim().length >= 3 &&
+    (emailRegisterEnabled
+      ? email.trim().length >= 5 && email.includes("@") && verifyCode.trim().length >= 4
+      : username.trim().length >= 3) &&
     password.length >= 6 &&
     password === confirmPassword;
+
+  const handleSendCode = async () => {
+    if (!email.trim()) {
+      setError("请输入邮箱地址");
+      return;
+    }
+    if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email.trim())) {
+      setError("邮箱格式不正确");
+      return;
+    }
+    setSendingCode(true);
+    setError("");
+    try {
+      await sendEmailCode(email.trim());
+      setCountdown(60);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("验证码发送失败，请稍后重试");
+      }
+    } finally {
+      setSendingCode(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,12 +111,22 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const resp = await registerApi({
-        username: username.trim(),
-        password,
-        confirmPassword,
-        nickname: nickname.trim() || undefined,
-      });
+      const resp = await registerApi(
+        emailRegisterEnabled
+          ? {
+              email: email.trim(),
+              verifyCode: verifyCode.trim(),
+              password,
+              confirmPassword,
+              nickname: nickname.trim() || undefined,
+            }
+          : {
+              username: username.trim(),
+              password,
+              confirmPassword,
+              nickname: nickname.trim() || undefined,
+            }
+      );
 
       useAuthStore.setState({
         token: resp.accessToken,
@@ -139,24 +194,73 @@ export default function RegisterPage() {
         <h1 className="text-[2rem] font-bold leading-[1.1] tracking-tight text-foreground">
           创建账号
         </h1>
-        <p className="text-base text-muted-foreground font-light">使用用户名和密码创建账号</p>
+        <p className="text-base text-muted-foreground font-light">
+          {emailRegisterEnabled ? "使用邮箱和验证码创建账号" : "使用用户名和密码创建账号"}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        <input
-          type="text"
-          placeholder="用户名"
-          value={username}
-          onChange={(e) => {
-            setUsername(e.target.value);
-            setError("");
-          }}
-          className="w-full backdrop-blur-[1px] text-foreground border border-border/30 rounded-full py-3 px-5 focus:outline-none focus:border-primary/50 bg-transparent placeholder:text-muted-foreground/60 transition-colors"
-          required
-          autoComplete="username"
-          disabled={loading}
-          minLength={3}
-        />
+        {emailRegisterEnabled ? (
+          <>
+            <input
+              type="email"
+              placeholder="邮箱地址（将作为登录账号）"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError("");
+              }}
+              className="w-full backdrop-blur-[1px] text-foreground border border-border/30 rounded-full py-3 px-5 focus:outline-none focus:border-primary/50 bg-transparent placeholder:text-muted-foreground/60 transition-colors"
+              required
+              autoComplete="email"
+              disabled={loading}
+            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="邮箱验证码"
+                value={verifyCode}
+                onChange={(e) => {
+                  setVerifyCode(e.target.value);
+                  setError("");
+                }}
+                className="w-full backdrop-blur-[1px] text-foreground border border-border/30 rounded-full py-3 px-5 focus:outline-none focus:border-primary/50 bg-transparent placeholder:text-muted-foreground/60 transition-colors"
+                required
+                autoComplete="off"
+                disabled={loading}
+                maxLength={6}
+              />
+              <button
+                type="button"
+                onClick={handleSendCode}
+                disabled={sendingCode || countdown > 0 || loading}
+                className={cn(
+                  "shrink-0 rounded-full border px-4 text-sm transition-colors",
+                  countdown > 0 || sendingCode
+                    ? "border-border/30 text-muted-foreground/60 cursor-not-allowed"
+                    : "border-primary/40 text-primary hover:bg-primary/10 cursor-pointer"
+                )}
+              >
+                {countdown > 0 ? `${countdown}s 后重发` : sendingCode ? "发送中..." : "获取验证码"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <input
+            type="text"
+            placeholder="用户名"
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setError("");
+            }}
+            className="w-full backdrop-blur-[1px] text-foreground border border-border/30 rounded-full py-3 px-5 focus:outline-none focus:border-primary/50 bg-transparent placeholder:text-muted-foreground/60 transition-colors"
+            required
+            autoComplete="username"
+            disabled={loading}
+            minLength={3}
+          />
+        )}
 
         <input
           type="text"
@@ -258,7 +362,6 @@ export default function RegisterPage() {
         </Link>
       </p>
 
-      <p className="text-xs text-muted-foreground/60 pt-4">云揽镜 · 公开注册</p>
     </AuthLayout>
   );
 }

@@ -92,7 +92,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-执行后会自动构建镜像并启动 MySQL、Redis、后端、前端和 Nginx，无需额外加 `--build`。
+执行后会拉取预构建镜像并启动 MySQL、Redis、后端、前端和 Nginx。
 
 如需自定义端口、密码或部署方式，请以 `.env.example` 为模板编辑根目录 `.env`。该文件已被 Git 忽略，更新项目时无需修改 `docker-compose.yml`。建议部署前在 `.env` 中设置 `ADMIN_PASSWORD`。
 
@@ -126,8 +126,16 @@ BACKEND_PORT=15858
 
 `PUBLIC_API_URL` 应填写后端根地址，末尾不要添加 `/api`。后端默认全局允许跨域；生产环境建议像示例一样将 `CORS_ALLOWED_ORIGIN_PATTERNS` 限制为实际前端来源，多个来源使用英文逗号分隔。
 
+使用预构建镜像：
+
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.separated.yml up -d
+```
+
+从源码构建镜像：
+
+```bash
+docker compose -f docker-compose.build.yml -f docker-compose.separated.yml up -d --build
 ```
 
 前后端独立部署不会启动仓库内置的 Nginx。请分别为前端和后端配置 HTTPS 反向代理，并在“系统设置 > 通用”中确认站点公网地址和后端资源公网地址。
@@ -226,8 +234,9 @@ MySQL 端口默认绑定到宿主机 `127.0.0.1:53306`，可直接用本机工�
 ├─ yunlan-video-server/       Java 后端、Flyway 迁移与后端测试
 ├─ yunlan-video-webui/   Next.js 前端
 ├─ docker/                Nginx 配置
-├─ docker-compose.yml     从源码本地构建部署
-└─ docker-compose.separated.yml
+├─ docker-compose.yml           拉取预构建镜像部署
+├─ docker-compose.build.yml     从源码本地构建部署
+└─ docker-compose.separated.yml 前后端分域部署覆盖文件
 ```
 
 ## 检查与测试

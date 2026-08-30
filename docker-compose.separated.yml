@@ -1,5 +1,5 @@
 # 前后端分域部署覆盖文件。
-# 与 docker-compose.yml 组合使用；Nginx 统一入口不会启动。
+# 与 docker-compose.yml 或 docker-compose.build.yml 组合使用；Nginx 统一入口不会启动。
 services:
   backend:
     ports:

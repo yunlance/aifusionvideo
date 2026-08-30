@@ -29,6 +29,8 @@ export interface AiModel {
   contextWindow: number | null;
   apiConfigId: number | null;
   comfyuiWorkflowId: number | null;
+  /** 归属用户ID；null 表示全局配置 */
+  userId: number | null;
   createTime: string;
   updateTime: string;
 }
@@ -328,4 +330,13 @@ export const apiConfigApi = {
   /** 获取远程可用模型列表 */
   remoteModels: (id: number) =>
     http.get<never, RemoteModel[]>(`/api/ai/api-config/remote-models?id=${id}`),
+};
+
+/** 总后台用户设置管理 */
+export const userModelConfigsApi = {
+  /** 获取指定用户私有渠道与模型配置 */
+  get: (userId: number) =>
+    http.get<never, { apiConfigs: ApiConfig[]; models: AiModel[] }>(
+      `/api/system/user/${userId}/model-configs`
+    ),
 };

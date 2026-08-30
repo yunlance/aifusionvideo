@@ -6,10 +6,6 @@
 FROM node:20-bookworm-slim AS deps
 
 WORKDIR /build
-# 仅用于无法验证 npm 官方源证书的内网/代理环境本机构建；公网正式镜像请删除以下两行
-ENV NODE_TLS_REJECT_UNAUTHORIZED=0
-ENV npm_config_strict_ssl=false
-
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN corepack enable pnpm
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
@@ -23,8 +19,6 @@ COPY --from=deps /build/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
-# 仅用于无法验证 npm 官方源证书的内网/代理环境本机构建；公网正式镜像请删除此行
-ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
 RUN corepack enable pnpm
 RUN --mount=type=cache,target=/build/.next/cache pnpm build
