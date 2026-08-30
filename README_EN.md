@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner-design.png" alt="AI Fusion Video Banner" width="920" />
+  <img src="assets/ui/banner-design.png" alt="AI Fusion Video Banner" width="920" />
 </p>
 
 <p align="center">

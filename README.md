@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner-design.png" alt="云揽镜 紫蓝配色设计" width="920" />
+  <img src="assets/ui/banner-design.png" alt="云揽镜 紫蓝配色设计" width="920" />
 </p>
 
 <p align="center">
