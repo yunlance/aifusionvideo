@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <sub>无需部署，打开浏览器即可体验完整功能 → <a href="https://md.xinchyun.com/"><strong>md.xinchyun.com</strong></a></sub>
+  <sub>无需部署，打开浏览器即可体验完整功能</sub>
 </p>
 
 <hr/>

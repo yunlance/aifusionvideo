@@ -22,46 +22,7 @@
 </p>
 
 <p align="center">
-  <sub>No deployment needed — try the full platform in your browser → <a href="https://md.xinchyun.com/"><strong>md.xinchyun.com</strong></a></sub>
-</p>
-
-<p align="center">
-  <img src="https://api.star-history.com/svg?repos=yunlance/aifusionvideo&type=Date" alt="GitHub Star History" width="920" />
-</p>
-
-<table align="center" style="margin: 0 auto; display: table;">
-  <tr>
-    <td align="center">
-      <b>Want to collaborate or give feedback? Open a <a href="https://github.com/yunlance/aifusionvideo/issues">GitHub Issue</a>.</b>
-    </td>
-  </tr>
-</table>
-
-<table align="center">
-  <thead>
-    <tr>
-      <th align="center">Contact the author</th>
-      <th align="center">Join the community</th>
-      <th align="center">Buy the author a coffee</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center" width="33%">
-        <a href="https://github.com/yunlance/aifusionvideo/issues">Open a GitHub Issue</a>
-      </td>
-      <td align="center" width="33%">
-        <a href="https://github.com/yunlance/aifusionvideo/discussions">GitHub Discussions</a>
-      </td>
-      <td align="center" width="33%">
-        <a href="https://github.com/yunlance/aifusionvideo">Star this project ⭐</a>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-<p align="center">
-  <sub><b>For support and discussions, please use <a href="https://github.com/yunlance/aifusionvideo/discussions">GitHub Discussions</a>.</b></sub>
+  <sub>No deployment needed — try the full platform in your browser</sub>
 </p>
 
 <hr/>
