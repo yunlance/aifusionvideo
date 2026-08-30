@@ -52,8 +52,8 @@ app:
 video:
   compose:
     # 本地未加入 PATH 时，可直接改成绝对路径，例如 C:/ffmpeg/bin/ffmpeg.exe
-    ffmpeg-path: ${VIDEO_COMPOSE_FFMPEG_PATH:D:\ffmpeg-7.1.1-full_build\bin\ffmpeg.exe}
-    ffprobe-path: ${VIDEO_COMPOSE_FFPROBE_PATH:D:\ffmpeg-7.1.1-full_build\bin\ffprobe.exe}
+    ffmpeg-path: ${VIDEO_COMPOSE_FFMPEG_PATH:ffmpeg}
+    ffprobe-path: ${VIDEO_COMPOSE_FFPROBE_PATH:ffprobe}
 
 # 日志级别（本地开发调高）
 logging:
