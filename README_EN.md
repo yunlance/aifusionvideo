@@ -93,17 +93,21 @@ Media assets can be stored on local disk or in an S3-compatible object store. Ag
 
 ## UI demos
 
-https://github.com/user-attachments/assets/fe71cbb8-f9d9-4351-9a4c-cb8a0a6af7ba
+![Login](assets/ui/login.png)
 
-https://github.com/user-attachments/assets/24d9443b-e463-405c-8ada-108236b4d6c2
+![Dashboard](assets/ui/dashboard.png)
 
-https://github.com/user-attachments/assets/2f1de26c-5cd5-4be3-ad2e-81be2edd6956
+![Analytics](assets/ui/analytics.png)
 
-https://github.com/user-attachments/assets/acd26ede-8b77-48c0-91dc-c80c5ed7ceca
+![Projects](assets/ui/projects.png)
 
-https://github.com/user-attachments/assets/8a8ce3cf-4bf8-4f76-ad7c-0af373d16a5b
+![Project detail](assets/ui/projects1.png)
 
-https://github.com/user-attachments/assets/be99d4c1-dc09-4616-8fba-06cb959c84c8
+![Project settings](assets/ui/projects-settings.png)
+
+![Generation](assets/ui/generate1.png)
+
+![Agent workspace](assets/ui/agents.png)
 
 ## Tech stack
 

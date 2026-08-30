@@ -55,17 +55,21 @@ Agent 运行基于 AgentScope，支持 Skill、MCP 和子 Agent。会话与运�
 
 ## 界面演示
 
-https://github.com/user-attachments/assets/fe71cbb8-f9d9-4351-9a4c-cb8a0a6af7ba
+![登录](assets/ui/login.png)
 
-https://github.com/user-attachments/assets/24d9443b-e463-405c-8ada-108236b4d6c2
+![仪表盘](assets/ui/dashboard.png)
 
-https://github.com/user-attachments/assets/2f1de26c-5cd5-4be3-ad2e-81be2edd6956
+![数据统计](assets/ui/analytics.png)
 
-https://github.com/user-attachments/assets/acd26ede-8b77-48c0-91dc-c80c5ed7ceca
+![项目列表](assets/ui/projects.png)
 
-https://github.com/user-attachments/assets/8a8ce3cf-4bf8-4f76-ad7c-0af373d16a5b
+![项目详情](assets/ui/projects1.png)
 
-https://github.com/user-attachments/assets/be99d4c1-dc09-4616-8fba-06cb959c84c8
+![项目设置](assets/ui/projects-settings.png)
+
+![生成](assets/ui/generate1.png)
+
+![Agent 工作区](assets/ui/agents.png)
 
 ## 技术栈
 
