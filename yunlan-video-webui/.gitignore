@@ -34,6 +34,9 @@ yarn-error.log*
 .env*
 !.env.development
 
+# runtime-generated config (overwritten by docker-entrypoint on startup)
+/public/runtime-config.js
+
 # vercel
 .vercel
 
