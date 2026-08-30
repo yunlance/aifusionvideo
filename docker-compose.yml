@@ -45,7 +45,7 @@ services:
 
   # ---------- 后端 ----------
   backend:
-    image: yunlance/aifusionvideo-server:latest
+    image: ghcr.io/yunlance/aifusionvideo-server:latest
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -78,7 +78,7 @@ services:
 
   # ---------- 前端 ----------
   frontend:
-    image: yunlance/aifusionvideo-webui:latest
+    image: ghcr.io/yunlance/aifusionvideo-webui:latest
     restart: unless-stopped
     environment:
       # 留空表示由统一入口提供同源 /api；分域部署由覆盖文件传入完整地址。
