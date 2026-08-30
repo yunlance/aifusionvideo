@@ -366,11 +366,6 @@ Issue reports, feature suggestions, and code improvements are welcome. For featu
 
 Before submitting, make sure the change has a clear scope and does not include secrets, credentials, or local environment files. Add or update tests and documentation when behavior changes.
 
-## Acknowledgements
-
-- Thanks to the [LinuxDo](https://linux.do) community for supporting the project
-- Thanks to [waoowaoo](https://github.com/saturndec/waoowaoo) for the script editor design reference
-
 ## License
 
 [MIT License](LICENSE)

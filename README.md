@@ -328,11 +328,6 @@ Flyway 迁移脚本位于 `yunlan-video-server/src/main/resources/db/migration/`
 
 提交前请确保改动范围清晰，不包含密钥、账号或本地环境文件；涉及行为变更时，请同步补充测试和必要文档。
 
-## 致谢
-
-- 感谢 [LinuxDo](https://linux.do) 社区对项目的支持
-- 感谢 [waoowaoo](https://github.com/saturndec/waoowaoo) 提供的剧本界面设计参考
-
 ## License
 
 [MIT License](LICENSE)
