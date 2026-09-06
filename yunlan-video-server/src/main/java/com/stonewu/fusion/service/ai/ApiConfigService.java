@@ -6,10 +6,13 @@ import cn.hutool.core.util.StrUtil;
 import com.stonewu.fusion.common.PageResult;
 import com.stonewu.fusion.common.BusinessException;
 import com.stonewu.fusion.entity.ai.ApiConfig;
+import com.stonewu.fusion.entity.ai.AiModel;
+import com.stonewu.fusion.entity.ai.UserApiKey;
 import com.stonewu.fusion.mapper.ai.ApiConfigMapper;
 import com.stonewu.fusion.service.ai.proxy.AiProxySupport;
 import com.stonewu.fusion.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +27,7 @@ public class ApiConfigService {
     private final ApiConfigMapper apiConfigMapper;
     private final ObjectProvider<ChatModelFactory> chatModelFactoryProvider;
     private final ModelAccessResolver modelAccessResolver;
+    private final UserApiKeyService userApiKeyService;
 
     /** 允许接入的平台白名单（包内可见，供模型绑定校验使用） */
     static final Set<String> ALLOWED_PLATFORMS = Set.of("newapi", "comfyui");
@@ -34,12 +38,10 @@ public class ApiConfigService {
         if (StrUtil.isBlank(apiConfig.getPlatform())) {
             apiConfig.setPlatform("newapi");
         }
-        // 归属设置：普通用户创建的渠道归属自己；管理员在全局模式下维护全局渠道、私有模式下维护自己的私有渠道
-        if (modelAccessResolver.isAdmin()) {
-            apiConfig.setUserId(modelAccessResolver.isGlobalMode() ? null : SecurityUtils.requireCurrentUserId());
-        } else {
-            apiConfig.setUserId(SecurityUtils.requireCurrentUserId());
-        }
+        // 渠道（地址/平台/协议/代理）统一由平台维护：仅管理员可创建，且一律归属全局（user_id = NULL）。
+        // 普通用户的自定义能力收敛为「只填写自己的密钥」，见 UserApiKeyService。
+        modelAccessResolver.assertAdminOnly();
+        apiConfig.setUserId(null);
         // 同一用户（全局为 null）同一平台仅允许存在 1 条启用的配置
         Long currentUserId = apiConfig.getUserId();
         long enabledCount = apiConfigMapper.selectCount(
@@ -78,9 +80,9 @@ public class ApiConfigService {
                                  String proxyUsername, String proxyPassword,
                                  String apiKey, String appId, String appSecret,
                                  Long modelId, Integer status, String remark) {
+        modelAccessResolver.assertAdminOnly();
         ApiConfig config = apiConfigMapper.selectById(id);
         if (config == null) throw new BusinessException(404, "API配置不存在");
-        modelAccessResolver.assertOwned(config);
         String effectivePlatform = platform != null ? platform : config.getPlatform();
         validatePlatform(effectivePlatform);
         if (name != null) config.setName(name);
@@ -114,11 +116,11 @@ public class ApiConfigService {
 
     @Transactional
     public void deleteApiConfig(Long id) {
+        modelAccessResolver.assertAdminOnly();
         ApiConfig config = apiConfigMapper.selectById(id);
         if (config == null) {
             throw new BusinessException(404, "API配置不存在");
         }
-        modelAccessResolver.assertOwned(config);
         apiConfigMapper.deleteById(id);
         evictModelCaches();
     }
@@ -163,20 +165,12 @@ public class ApiConfigService {
     }
 
     /**
-     * 生成/选择场景的可见范围（管理员也按模式过滤，符合"管理员也是用户"）：
-     * 全局模式用全局渠道；私有模式用当前用户私有渠道；无登录上下文（如异步任务）时回退全局渠道。
+     * 生成/选择场景的可见范围：渠道统一由平台维护（user_id IS NULL），
+     * 所有用户（含管理员）都看到同一份全局渠道；私有/全局模式只影响密钥来源
+     * （见 {@link #resolveForGeneration}），不影响渠道可见性。
      */
     private void applyGenerationScope(LambdaQueryWrapper<ApiConfig> wrapper) {
-        if (modelAccessResolver.isGlobalMode()) {
-            wrapper.isNull(ApiConfig::getUserId);
-        } else {
-            Long userId = SecurityUtils.getCurrentUserId();
-            if (userId != null) {
-                wrapper.eq(ApiConfig::getUserId, userId);
-            } else {
-                wrapper.isNull(ApiConfig::getUserId);
-            }
-        }
+        wrapper.isNull(ApiConfig::getUserId);
     }
 
     public List<ApiConfig> getEnabledList() {
@@ -205,6 +199,64 @@ public class ApiConfigService {
                 .in(ApiConfig::getPlatform, platforms);
         applyGenerationScope(wrapper);
         return apiConfigMapper.selectList(wrapper);
+    }
+
+    // ==================== 生成链路渠道解析（核心：解耦模型与密钥） ====================
+
+    /**
+     * 生成链路统一解析渠道：<b>解耦「模型定义」与「渠道/密钥」</b>。
+     * <ul>
+     *   <li>全局模式（model_use_global=true）：使用后台全局渠道，密钥用后台的，用户零配置。</li>
+     *   <li>自带密钥模式（model_use_global=false）：沿用后台全局渠道的地址/平台/协议/代理，
+     *       仅把密钥替换为该用户自己的密钥（afv_user_api_key）。</li>
+     * </ul>
+     * <b>密钥绝不串联</b>：自带密钥模式下若用户未配置密钥，直接报错，
+     * 绝不回退到后台密钥——既避免用户消耗平台额度，也杜绝密钥混用。
+     *
+     * @param model  模型（其 apiConfigId 指向后台全局渠道模板）
+     * @param userId 使用方用户ID；异步任务请传<b>任务归属用户</b>，不要依赖登录上下文
+     */
+    public ApiConfig resolveForGeneration(AiModel model, Long userId) {
+        ApiConfig template = resolveGlobalTemplate(model);
+        if (template == null) {
+            return null;
+        }
+        // 密钥选择只按模式判断：全局模式统一用后台全局密钥；非全局模式用当前用户自己的密钥
+        if (modelAccessResolver.isGlobalMode()) {
+            return template;
+        }
+        String platform = template.getPlatform();
+        UserApiKey userKey = userId == null ? null : userApiKeyService.findDecrypted(userId, platform);
+        if (userKey == null || StrUtil.isBlank(userKey.getApiKey())) {
+            throw new BusinessException(400,
+                    "请先在「我的密钥」中配置【" + platform + "】平台的 API 密钥后再使用");
+        }
+        return withUserSecrets(template, userKey);
+    }
+
+    /** 取后台全局渠道模板（地址/协议/代理的唯一来源，用户不可改） */
+    private ApiConfig resolveGlobalTemplate(AiModel model) {
+        if (model != null && model.getApiConfigId() != null) {
+            ApiConfig bound = apiConfigMapper.selectById(model.getApiConfigId());
+            if (bound != null && bound.getUserId() == null) {
+                return bound;
+            }
+        }
+        List<ApiConfig> globals = apiConfigMapper.selectList(new LambdaQueryWrapper<ApiConfig>()
+                .eq(ApiConfig::getStatus, 1)
+                .isNull(ApiConfig::getUserId)
+                .orderByDesc(ApiConfig::getId));
+        return globals.isEmpty() ? null : globals.get(0);
+    }
+
+    /** 复制后台渠道模板，<b>仅替换密钥字段</b>；地址/协议/代理一律沿用，用户无法篡改 */
+    private ApiConfig withUserSecrets(ApiConfig template, UserApiKey userKey) {
+        ApiConfig copy = new ApiConfig();
+        BeanUtils.copyProperties(template, copy);
+        copy.setApiKey(userKey.getApiKey());
+        copy.setAppId(userKey.getAppId() != null ? userKey.getAppId() : template.getAppId());
+        copy.setAppSecret(userKey.getAppSecret() != null ? userKey.getAppSecret() : template.getAppSecret());
+        return copy;
     }
 
     private String normalizeApiUrl(String platform, String apiUrl) {

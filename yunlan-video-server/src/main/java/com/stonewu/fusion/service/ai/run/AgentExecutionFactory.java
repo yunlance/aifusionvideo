@@ -261,7 +261,8 @@ public final class AgentExecutionFactory {
         if (model == null || !Integer.valueOf(1).equals(model.getStatus())) {
             throw unavailable("Persisted model configuration is unavailable");
         }
-        String modelFingerprint = modelFactory.modelConfigFingerprint(model);
+        Long ownerUserId = AgentKernelSpecFactory.ownerUserId(payload.promptVariables());
+        String modelFingerprint = modelFactory.modelConfigFingerprint(model, ownerUserId);
         long modelVersion = CanonicalAgentKernelSnapshotBuilder.modelConfigVersion(modelFingerprint);
         if (modelVersion != payload.modelConfigVersion()) {
             try {
@@ -272,7 +273,7 @@ public final class AgentExecutionFactory {
             } catch (BusinessException invalidEffort) {
                 throw unavailable("Persisted reasoning effort is no longer available");
             }
-            modelFingerprint = modelFactory.modelConfigFingerprint(model);
+            modelFingerprint = modelFactory.modelConfigFingerprint(model, ownerUserId);
             modelVersion = CanonicalAgentKernelSnapshotBuilder.modelConfigVersion(modelFingerprint);
         }
         AgentKernelSpec restored;

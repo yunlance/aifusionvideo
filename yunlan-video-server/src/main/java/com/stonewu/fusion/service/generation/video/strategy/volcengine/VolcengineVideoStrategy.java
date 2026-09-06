@@ -3,10 +3,13 @@ package com.stonewu.fusion.service.generation.video.strategy.volcengine;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
+import com.stonewu.fusion.common.BusinessException;
 import com.stonewu.fusion.entity.ai.AiModel;
 import com.stonewu.fusion.entity.ai.ApiConfig;
 import com.stonewu.fusion.entity.generation.VideoItem;
 import com.stonewu.fusion.entity.generation.VideoTask;
+import com.stonewu.fusion.security.GenerationContext;
+import com.stonewu.fusion.security.SecurityUtils;
 import com.stonewu.fusion.service.ai.AiModelService;
 import com.stonewu.fusion.service.ai.ApiConfigService;
 import com.stonewu.fusion.service.generation.video.VideoGenerationService;
@@ -326,17 +329,20 @@ public class VolcengineVideoStrategy implements VideoGenerationStrategy {
      * 从 AiModel 解析关联的 ApiConfig
      */
     private ApiConfig resolveApiConfig(AiModel model) {
-        if (model != null && model.getApiConfigId() != null) {
-            try {
-                ApiConfig config = apiConfigService.getById(model.getApiConfigId());
-                if (config != null) {
-                    return config;
-                }
-            } catch (Exception e) {
-                log.warn("[Volcengine Video] 获取 API 配置失败: apiConfigId={}", model.getApiConfigId());
-            }
+        if (model == null || model.getApiConfigId() == null) {
+            throw new BusinessException("火山引擎视频模型缺少 apiConfigId");
         }
-        throw new RuntimeException("未找到火山引擎视频生成 API 配置，请在系统设置中配置 volcengine 平台 API Key");
+        ApiConfig apiConfig = apiConfigService.resolveForGeneration(model, resolveUserId());
+        if (apiConfig == null) {
+            throw new BusinessException("未找到火山引擎视频生成 API 配置，请在系统设置中配置 volcengine 平台 API Key");
+        }
+        return apiConfig;
+    }
+
+    /** 优先取登录用户；异步任务无登录上下文时，取 GenerationContext 绑定的任务归属用户 */
+    private Long resolveUserId() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return userId != null ? userId : GenerationContext.getUserId();
     }
 
     /**

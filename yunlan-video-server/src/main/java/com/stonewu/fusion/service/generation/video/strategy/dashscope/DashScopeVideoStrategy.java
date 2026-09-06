@@ -13,6 +13,8 @@ import com.stonewu.fusion.entity.ai.AiModel;
 import com.stonewu.fusion.entity.ai.ApiConfig;
 import com.stonewu.fusion.entity.generation.VideoItem;
 import com.stonewu.fusion.entity.generation.VideoTask;
+import com.stonewu.fusion.security.GenerationContext;
+import com.stonewu.fusion.security.SecurityUtils;
 import com.stonewu.fusion.service.ai.AiModelService;
 import com.stonewu.fusion.service.ai.ApiConfigService;
 import com.stonewu.fusion.service.ai.dashscope.DashScopeGenerationSupport;
@@ -592,13 +594,20 @@ public class DashScopeVideoStrategy implements VideoGenerationStrategy {
     }
 
     private ApiConfig resolveApiConfig(AiModel model) {
-        if (model != null && model.getApiConfigId() != null) {
-            ApiConfig config = apiConfigService.getById(model.getApiConfigId());
-            if (config != null) {
-                return config;
-            }
+        if (model == null || model.getApiConfigId() == null) {
+            throw new BusinessException("DashScope 视频模型缺少 apiConfigId");
         }
-        throw new BusinessException("未找到 DashScope 视频生成 API 配置，请在系统设置中配置 dashscope 平台 API Key");
+        ApiConfig apiConfig = apiConfigService.resolveForGeneration(model, resolveUserId());
+        if (apiConfig == null) {
+            throw new BusinessException("未找到 DashScope 视频生成 API 配置，请在系统设置中配置 dashscope 平台 API Key");
+        }
+        return apiConfig;
+    }
+
+    /** 优先取登录用户；异步任务无登录上下文时，取 GenerationContext 绑定的任务归属用户 */
+    private Long resolveUserId() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return userId != null ? userId : GenerationContext.getUserId();
     }
 
     private String firstNonBlank(String... values) {

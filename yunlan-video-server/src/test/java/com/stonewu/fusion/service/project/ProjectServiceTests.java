@@ -19,6 +19,7 @@ import com.stonewu.fusion.mapper.storyboard.StoryboardItemMapper;
 import com.stonewu.fusion.mapper.storyboard.StoryboardMapper;
 import com.stonewu.fusion.mapper.storyboard.StoryboardSceneMapper;
 import com.stonewu.fusion.service.project.dto.ProjectWorkspaceOverview;
+import com.stonewu.fusion.service.system.SystemConfigService;
 import com.stonewu.fusion.service.team.TeamService;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.junit.jupiter.api.BeforeAll;
@@ -84,6 +85,9 @@ class ProjectServiceTests {
 
     @Mock
     private TeamService teamService;
+
+    @Mock
+    private SystemConfigService systemConfigService;
 
     @InjectMocks
     private ProjectService projectService;
@@ -231,9 +235,8 @@ class ProjectServiceTests {
     }
 
     @Test
-    void listAccessibleByUserUsesCurrentTeamScope() {
+    void listAccessibleByUserBuildsOwnerFilteredQuery() {
         when(teamService.getCurrentTeamIdByUser(9L)).thenReturn(5L);
-        when(teamService.listMemberUserIds(5L)).thenReturn(java.util.List.of(9L, 10L));
         when(projectMapper.selectList(any())).thenReturn(java.util.List.of());
 
         projectService.listAccessibleByUser(9L);
@@ -242,11 +245,12 @@ class ProjectServiceTests {
                 ArgumentCaptor.forClass(com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper.class);
         verify(projectMapper).selectList(wrapperCaptor.capture());
         verify(teamService).getCurrentTeamIdByUser(9L);
-        verify(teamService).listMemberUserIds(5L);
+        // 修复后不再把同团队其他成员的个人项目纳入可见范围
+        verify(teamService, never()).listMemberUserIds(any());
     }
 
     @Test
-    void canAccessProjectAllowsCurrentTeamPersonalProject() {
+    void canAccessProjectRejectsOtherMembersPersonalProject() {
         when(projectMapper.selectById(11L)).thenReturn(Project.builder()
                 .id(11L)
                 .ownerType(1)
@@ -254,9 +258,9 @@ class ProjectServiceTests {
                 .build());
         when(memberMapper.exists(any())).thenReturn(false);
         when(teamService.getCurrentTeamIdByUser(9L)).thenReturn(5L);
-        when(teamService.listMemberUserIds(5L)).thenReturn(java.util.List.of(9L, 10L));
 
-        assertThat(projectService.canAccessProject(11L, 9L)).isTrue();
+        // 修复后：同团队其他成员的个人项目不可访问
+        assertThat(projectService.canAccessProject(11L, 9L)).isFalse();
     }
 
     private static String dataUrl(String mimeType) {

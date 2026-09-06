@@ -58,15 +58,12 @@ public class ModelAccessResolver {
      * 全局模式：全局模型；私有模式：仅当前用户私有模型。
      */
     public List<AiModel> visibleModels(Integer modelType) {
+        // 模型统一由平台维护：无论「全局模式」还是「用户自带密钥模式」，
+        // 所有用户看到的都是同一份全局模型（user_id IS NULL），用户只读、不可增删改。
         LambdaQueryWrapper<AiModel> wrapper = new LambdaQueryWrapper<AiModel>()
                 .eq(modelType != null, AiModel::getModelType, modelType)
-                .eq(AiModel::getStatus, 1);
-        if (isGlobalMode()) {
-            wrapper.isNull(AiModel::getUserId);
-        } else {
-            Long userId = SecurityUtils.getCurrentUserId();
-            wrapper.eq(AiModel::getUserId, userId);
-        }
+                .eq(AiModel::getStatus, 1)
+                .isNull(AiModel::getUserId);
         wrapper.orderByAsc(AiModel::getSort).orderByDesc(AiModel::getId);
         return aiModelMapper.selectList(wrapper);
     }
@@ -152,6 +149,17 @@ public class ModelAccessResolver {
         if (!model.getUserId().equals(userId)) {
             throw new BusinessException(403, "无权操作其他用户的配置");
         }
+    }
+
+    /**
+     * 写操作统一校验：模型与渠道配置由平台（管理员）维护，普通用户只读。
+     * 用户侧的自定义能力收敛为「只填写自己的密钥」（见 UserApiKeyService）。
+     */
+    public void assertAdminOnly() {
+        if (isAdmin()) {
+            return;
+        }
+        throw new BusinessException(403, "模型与渠道配置由平台统一维护，无修改权限");
     }
 
     public boolean isAdmin() {

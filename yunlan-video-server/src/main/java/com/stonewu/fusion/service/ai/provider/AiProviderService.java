@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.stonewu.fusion.controller.ai.vo.RemoteModelVO;
 import com.stonewu.fusion.entity.ai.AiModel;
 import com.stonewu.fusion.entity.ai.ApiConfig;
+import com.stonewu.fusion.security.SecurityUtils;
 import com.stonewu.fusion.service.ai.ModelPresetService;
 import com.stonewu.fusion.service.ai.agentscope.kernel.AgentKernelKey;
 import com.stonewu.fusion.service.ai.model.AiModelMetadataResolver;
@@ -37,12 +38,24 @@ public class AiProviderService {
         return provisionAgentScopeModel(model).model();
     }
 
+    public ChatModelBase createAgentScopeModel(AiModel model, Long userId) {
+        return provisionAgentScopeModel(model, userId).model();
+    }
+
     public String agentScopeModelFingerprint(AiModel model) {
         return fingerprint(contextFactory.createForModel(model));
     }
 
+    public String agentScopeModelFingerprint(AiModel model, Long userId) {
+        return fingerprint(contextFactory.createForModel(model, userId));
+    }
+
     public AgentScopeModelProvision provisionAgentScopeModel(AiModel model) {
-        AiProviderContext context = contextFactory.createForModel(model);
+        return provisionAgentScopeModel(model, SecurityUtils.getCurrentUserId());
+    }
+
+    public AgentScopeModelProvision provisionAgentScopeModel(AiModel model, Long userId) {
+        AiProviderContext context = contextFactory.createForModel(model, userId);
         ChatModelBase agentScopeModel = providerRegistry.getProvider(context)
                 .createAgentScopeModel(context);
         return new AgentScopeModelProvision(agentScopeModel, fingerprint(context));

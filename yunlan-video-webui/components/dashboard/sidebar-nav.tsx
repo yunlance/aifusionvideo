@@ -13,6 +13,7 @@ import {
   Settings,
   ArrowLeft,
   Bot,
+  Key,
   HardDrive,
   ImagePlus,
   Video,
@@ -24,6 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { projectApi, type Project } from "@/lib/api/project";
 import { toastApiError } from "@/lib/api/toast-api-error";
+import { getInitStatus } from "@/lib/api/system-init";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { primaryNavItems } from "@/lib/nav";
 
@@ -96,6 +98,22 @@ export function SidebarNav({
   const pathname = usePathname();
   const currentUser = useAuthStore((state) => state.user);
   const isAdmin = currentUser?.roles?.includes("admin") ?? false;
+  // 全局模式下（model_use_global=true），普通用户共用平台密钥，无需也不能配置自己的密钥
+  const [modelUseGlobal, setModelUseGlobal] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getInitStatus()
+      .then((status) => {
+        if (!cancelled) setModelUseGlobal(status.modelUseGlobal);
+      })
+      .catch(() => {
+        // 读取失败时按私有模式处理，保持原菜单
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const projectMatch = pathname.match(/^\/projects\/(\d+)/);
   const projectId = projectMatch ? Number(projectMatch[1]) : null;
@@ -104,6 +122,21 @@ export function SidebarNav({
     project: Project;
   } | null>(null);
 
+  const myApiKeyItem: SidebarItem = {
+    key: "my-api-key",
+    label: "我的密钥",
+    icon: Key,
+    href: "/settings/my-api-key",
+    iconColor: "text-purple-400",
+  };
+
+  const normalSettingsItems: SidebarItem[] = [
+    { key: "profile", label: "个人设置", icon: Users, href: "/settings/profile", iconColor: "text-blue-400" },
+    myApiKeyItem,
+    { key: "agents", label: "智能体配置", icon: Bot, href: "/settings/agents", iconColor: "text-violet-400" },
+  ];
+
+  // 私有模式下所有用户（含管理员）都能配置自己的密钥；全局模式下统一使用平台密钥，隐藏入口
   const settingsItems: SidebarItem[] = isAdmin
     ? [
       { key: "general", label: "通用设置", icon: Settings, href: "/settings/general", iconColor: "text-green-400" },
@@ -112,11 +145,11 @@ export function SidebarNav({
       { key: "ai-models", label: "AI 配置", icon: Bot, href: "/settings/ai-models", iconColor: "text-purple-400" },
       { key: "agents", label: "智能体配置", icon: Bot, href: "/settings/agents", iconColor: "text-violet-400" },
       { key: "storage", label: "存储配置", icon: HardDrive, href: "/settings/storage", iconColor: "text-orange-400" },
+      ...(modelUseGlobal ? [] : [myApiKeyItem]),
     ]
-    : [
-      { key: "profile", label: "个人设置", icon: Users, href: "/settings/profile", iconColor: "text-blue-400" },
-      { key: "agents", label: "智能体配置", icon: Bot, href: "/settings/agents", iconColor: "text-violet-400" },
-    ];
+    : modelUseGlobal
+      ? normalSettingsItems.filter((i) => i.key !== "my-api-key")
+      : normalSettingsItems;
 
   // 若外部已传入 project，则不在组件内自行请求
   const project =

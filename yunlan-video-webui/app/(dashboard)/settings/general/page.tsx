@@ -270,6 +270,7 @@ export default function GeneralSettingsPage() {
         resource_base_url: normalizedConfigs.resource_base_url,
         allow_register: String(configs.allow_register),
         allow_email_register: String(configs.allow_email_register),
+        model_use_global: String(configs.model_use_global),
         mail_smtp_host: configs.mail_smtp_host || "",
         mail_smtp_port: configs.mail_smtp_port || "",
         mail_username: configs.mail_username || "",
@@ -699,7 +700,7 @@ export default function GeneralSettingsPage() {
                   configs.model_use_global ? "text-emerald-600" : "text-foreground/80"
                 )}
               >
-                {configs.model_use_global ? "全局模式（统一用全局模型）" : "私有模式（每人用自己的模型）"}
+                {configs.model_use_global ? "全局模式（统一用全局模型）" : "私有模式（每人用自己的秘钥）"}
               </span>
             </div>
           </motion.div>

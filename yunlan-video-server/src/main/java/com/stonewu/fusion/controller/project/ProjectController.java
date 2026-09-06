@@ -43,12 +43,14 @@ public class ProjectController {
     @Operation(summary = "获取项目详情")
     @GetMapping("/{id}")
     public CommonResult<Project> get(@PathVariable Long id) {
+        projectService.assertAccessible(id, SecurityUtils.requireCurrentUserId());
         return CommonResult.success(projectService.getById(id));
     }
 
     @Operation(summary = "获取项目剧本与分镜工作区概览")
     @GetMapping("/{id}/workspace-overview")
     public CommonResult<ProjectWorkspaceOverview> getWorkspaceOverview(@PathVariable Long id) {
+        projectService.assertAccessible(id, SecurityUtils.requireCurrentUserId());
         return CommonResult.success(projectService.getWorkspaceOverview(id));
     }
 
@@ -78,6 +80,7 @@ public class ProjectController {
     @Operation(summary = "更新项目")
     @PutMapping
     public CommonResult<Project> update(@Valid @RequestBody ProjectUpdateReqVO reqVO) {
+        projectService.assertAccessible(reqVO.getId(), SecurityUtils.requireCurrentUserId());
         Project project = ProjectConvert.INSTANCE.convert(reqVO);
         return CommonResult.success(projectService.update(project));
     }
@@ -85,6 +88,7 @@ public class ProjectController {
     @Operation(summary = "删除项目")
     @DeleteMapping("/{id}")
     public CommonResult<Boolean> delete(@PathVariable Long id) {
+        projectService.assertAccessible(id, SecurityUtils.requireCurrentUserId());
         projectService.delete(id);
         return CommonResult.success(true);
     }
@@ -94,6 +98,7 @@ public class ProjectController {
     @Operation(summary = "获取项目成员列表")
     @GetMapping("/{projectId}/members")
     public CommonResult<List<ProjectMember>> listMembers(@PathVariable Long projectId) {
+        projectService.assertAccessible(projectId, SecurityUtils.requireCurrentUserId());
         return CommonResult.success(projectService.listMembers(projectId));
     }
 
@@ -102,12 +107,14 @@ public class ProjectController {
     public CommonResult<ProjectMember> addMember(@PathVariable Long projectId,
                                                   @RequestParam Long userId,
                                                   @RequestParam(defaultValue = "3") Integer role) {
+        projectService.assertAccessible(projectId, SecurityUtils.requireCurrentUserId());
         return CommonResult.success(projectService.addMember(projectId, userId, role));
     }
 
     @Operation(summary = "移除项目成员")
     @DeleteMapping("/{projectId}/members/{userId}")
     public CommonResult<Boolean> removeMember(@PathVariable Long projectId, @PathVariable Long userId) {
+        projectService.assertAccessible(projectId, SecurityUtils.requireCurrentUserId());
         projectService.removeMember(projectId, userId);
         return CommonResult.success(true);
     }

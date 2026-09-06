@@ -31,6 +31,7 @@ public class AiModelController {
 
     @PostMapping("/create")
     @Operation(summary = "创建AI模型")
+    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<Long> create(@Valid @RequestBody AiModelCreateReqVO reqVO) {
         AiModel model = AiModel.builder()
                 .name(reqVO.getName())
@@ -59,6 +60,7 @@ public class AiModelController {
 
     @PutMapping("/update")
     @Operation(summary = "更新AI模型")
+    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<Boolean> update(@Valid @RequestBody AiModelUpdateReqVO reqVO) {
         aiModelService.updateAiModel(reqVO.getId(), reqVO.getName(), reqVO.getCode(),
                 reqVO.getModelProtocol(), reqVO.getCapabilityPresetCode(), reqVO.getModelType(),
@@ -73,6 +75,7 @@ public class AiModelController {
 
     @DeleteMapping("/delete")
     @Operation(summary = "删除AI模型")
+    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<Boolean> delete(@RequestParam("id") Long id) {
         aiModelService.deleteAiModel(id);
         return success(true);

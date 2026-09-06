@@ -74,7 +74,9 @@ public class UserService {
         return userRoleMapper.exists(new LambdaQueryWrapper<UserRole>().eq(UserRole::getRoleId, adminRole.getId()));
     }
 
-    @Cacheable(value = "userByUsername", key = "#username")
+    // unless 必需：CacheConfig 配置了 disableCachingNullValues()，
+    // 用户名不存在时若缓存 null 会抛异常，登录会变成 500 而非 401。
+    @Cacheable(value = "userByUsername", key = "#username", unless = "#result == null")
     public User getByUsername(String username) {
         return userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
     }

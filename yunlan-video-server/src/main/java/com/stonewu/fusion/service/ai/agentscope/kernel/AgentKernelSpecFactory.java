@@ -117,7 +117,7 @@ public final class AgentKernelSpecFactory {
                 systemPrompt,
                 promptVariables,
                 tools,
-                modelFactory.modelConfigFingerprint(model));
+                modelFactory.modelConfigFingerprint(model, ownerUserId));
     }
 
     public AgentKernelSpec createChild(
@@ -336,7 +336,7 @@ public final class AgentKernelSpecFactory {
         return ownerUserId(spec.promptVariables());
     }
 
-    private static Long ownerUserId(Map<String, String> promptVariables) {
+    public static Long ownerUserId(Map<String, String> promptVariables) {
         String value = promptVariables.get(OWNER_USER_ID_VARIABLE);
         if (value == null || value.isBlank()) {
             return null;

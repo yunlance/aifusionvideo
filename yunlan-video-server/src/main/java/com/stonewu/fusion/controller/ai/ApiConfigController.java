@@ -36,6 +36,7 @@ public class ApiConfigController {
 
     @PostMapping("/create")
     @Operation(summary = "创建API配置")
+    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<Long> create(@Valid @RequestBody ApiConfigSaveReqVO reqVO) {
         ApiConfig config = ApiConfig.builder()
                 .name(reqVO.getName()).platform(reqVO.getPlatform())
@@ -58,6 +59,7 @@ public class ApiConfigController {
 
     @PutMapping("/update")
     @Operation(summary = "更新API配置")
+    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<Boolean> update(@Valid @RequestBody ApiConfigSaveReqVO reqVO) {
         apiConfigService.updateApiConfig(reqVO.getId(), reqVO.getName(), reqVO.getPlatform(),
             reqVO.getTextProtocol(), reqVO.getImageProtocol(), reqVO.getVideoProtocol(),
@@ -70,6 +72,7 @@ public class ApiConfigController {
 
     @DeleteMapping("/delete")
     @Operation(summary = "删除API配置")
+    @PreAuthorize("hasRole('ADMIN')")
     public CommonResult<Boolean> delete(@RequestParam("id") Long id) {
         apiConfigService.deleteApiConfig(id);
         return success(true);

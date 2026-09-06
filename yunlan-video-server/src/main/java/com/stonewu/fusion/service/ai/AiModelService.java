@@ -45,12 +45,9 @@ public class AiModelService {
 
     @Transactional
     public Long createAiModel(AiModel aiModel) {
-        // 归属设置：普通用户创建的模型归属自己；管理员在全局模式下维护全局模型、私有模式下维护自己的私有模型
-        if (modelAccessResolver.isAdmin()) {
-            aiModel.setUserId(modelAccessResolver.isGlobalMode() ? null : SecurityUtils.requireCurrentUserId());
-        } else {
-            aiModel.setUserId(SecurityUtils.requireCurrentUserId());
-        }
+        // 模型统一由平台维护：仅管理员可创建，且一律归属全局（user_id = NULL），对普通用户只读
+        modelAccessResolver.assertAdminOnly();
+        aiModel.setUserId(null);
         validateApiConfig(aiModel.getApiConfigId(), true);
         validateUniqueCode(null, aiModel.getApiConfigId(), aiModel.getCode());
         normalizeMetadata(aiModel);
@@ -77,6 +74,7 @@ public class AiModelService {
                                Map<String, List<String>> multimodalInputTransports,
                                Boolean supportReasoning, List<String> reasoningEffortLevels,
                                Integer contextWindow, Long comfyuiWorkflowId) {
+        modelAccessResolver.assertAdminOnly();
         AiModel model = aiModelMapper.selectById(id);
         if (model == null) throw new BusinessException(404, "AI模型不存在");
         Long nextApiConfigId = apiConfigId != null ? apiConfigId : model.getApiConfigId();
@@ -133,11 +131,11 @@ public class AiModelService {
 
     @Transactional
     public void deleteAiModel(Long id) {
+        modelAccessResolver.assertAdminOnly();
         AiModel model = aiModelMapper.selectById(id);
         if (model == null) {
             throw new BusinessException(404, "AI模型不存在");
         }
-        modelAccessResolver.assertOwned(model);
         aiModelMapper.softDeleteById(id);
         chatModelFactory.evict(id);
     }
@@ -196,20 +194,12 @@ public class AiModelService {
     }
 
     /**
-     * 生成/选择场景的可见范围（管理员也按模式过滤，符合"管理员也是用户"）：
-     * 全局模式用全局模型；私有模式用当前用户私有模型；无登录上下文（如异步任务）时回退全局模型，避免查询返回空。
+     * 生成/选择场景的可见范围：模型统一由平台维护（user_id IS NULL），
+     * 所有用户（含管理员）都看到同一份全局模型；私有/全局模式只影响密钥来源，
+     * 不影响模型可见性。
      */
     private void applyGenerationScope(LambdaQueryWrapper<AiModel> wrapper) {
-        if (modelAccessResolver.isGlobalMode()) {
-            wrapper.isNull(AiModel::getUserId);
-        } else {
-            Long userId = SecurityUtils.getCurrentUserId();
-            if (userId != null) {
-                wrapper.eq(AiModel::getUserId, userId);
-            } else {
-                wrapper.isNull(AiModel::getUserId);
-            }
-        }
+        wrapper.isNull(AiModel::getUserId);
     }
 
     public List<AiModel> getEnabledList() {

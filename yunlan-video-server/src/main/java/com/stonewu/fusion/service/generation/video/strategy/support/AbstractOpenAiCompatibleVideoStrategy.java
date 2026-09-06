@@ -8,6 +8,8 @@ import com.stonewu.fusion.entity.ai.AiModel;
 import com.stonewu.fusion.entity.ai.ApiConfig;
 import com.stonewu.fusion.entity.generation.VideoItem;
 import com.stonewu.fusion.entity.generation.VideoTask;
+import com.stonewu.fusion.security.GenerationContext;
+import com.stonewu.fusion.security.SecurityUtils;
 import com.stonewu.fusion.service.ai.AiModelService;
 import com.stonewu.fusion.service.ai.ApiConfigService;
 import com.stonewu.fusion.service.ai.ModelPresetService;
@@ -326,14 +328,20 @@ public abstract class AbstractOpenAiCompatibleVideoStrategy implements VideoGene
         if (model.getApiConfigId() == null) {
             throw new BusinessException(providerLabel() + " 视频模型缺少 apiConfigId");
         }
-        ApiConfig apiConfig = apiConfigService.getById(model.getApiConfigId());
+        ApiConfig apiConfig = apiConfigService.resolveForGeneration(model, resolveUserId());
         if (apiConfig == null) {
-            throw new BusinessException(providerLabel() + " API 配置不存在");
+            throw new BusinessException(providerLabel() + " API 配置不存在，请联系管理员在后台配置渠道");
         }
         if (StrUtil.isBlank(apiConfig.getApiKey())) {
             throw new BusinessException(providerLabel() + " 缺少 API Key 配置");
         }
         return apiConfig;
+    }
+
+    /** 优先取登录用户；异步任务无登录上下文时，取 GenerationContext 绑定的任务归属用户 */
+    private Long resolveUserId() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return userId != null ? userId : GenerationContext.getUserId();
     }
 
     private String resolveModelCode(AiModel model) {

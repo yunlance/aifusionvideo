@@ -73,8 +73,14 @@ public class ProjectService {
         return project;
     }
 
+    /**
+     * 项目分页。与 {@link #listAccessibleByUser} 使用同一套可见范围条件，
+     * 避免接口被直接调用时越权返回所有人的项目（此前查询条件为 null，等于全表）。
+     */
     public PageResult<Project> page(int pageNo, int pageSize) {
-        return PageResult.of(projectMapper.selectPage(new Page<>(pageNo, pageSize), null));
+        LambdaQueryWrapper<Project> wrapper = buildAccessibleWrapper(SecurityUtils.getCurrentUserId());
+        wrapper.orderByDesc(Project::getCreateTime);
+        return PageResult.of(projectMapper.selectPage(new Page<>(pageNo, pageSize), wrapper));
     }
 
     @Cacheable(value = "project", key = "'owner:' + #ownerType + ':' + #ownerId")
@@ -85,40 +91,41 @@ public class ProjectService {
                 .orderByDesc(Project::getCreateTime));
     }
 
+    /**
+     * 当前用户可见的项目：系统演示项目 + 自己的个人项目 + 所属团队的项目。
+     * <p>
+     * 修复：此前会一并返回「团队内其他成员的个人项目」。单团队架构下所有用户
+     * 同属一个默认团队，这等同于所有人互相可见彼此的私有项目。
+     */
     public List<Project> listAccessibleByUser(Long userId) {
-        Long currentTeamId = teamService.getCurrentTeamIdByUser(userId);
-        List<Project> accessible;
-        if (currentTeamId == null) {
-            accessible = listByOwner(OWNER_TYPE_PERSONAL, userId);
-        } else {
-            List<Long> memberUserIds = teamService.listMemberUserIds(currentTeamId);
-            accessible = projectMapper.selectList(new LambdaQueryWrapper<Project>()
-                    .and(wrapper -> wrapper
-                            .and(teamOwned -> teamOwned
-                                    .eq(Project::getOwnerType, OWNER_TYPE_TEAM)
-                                    .eq(Project::getOwnerId, currentTeamId))
-                            .or(memberOwned -> memberOwned
-                                    .eq(Project::getOwnerType, OWNER_TYPE_PERSONAL)
-                                    .in(Project::getOwnerId, memberUserIds)))
-                    .orderByDesc(Project::getCreateTime));
-        }
-        appendDemoProject(accessible);
-        return accessible;
+        LambdaQueryWrapper<Project> wrapper = buildAccessibleWrapper(userId);
+        wrapper.orderByDesc(Project::getCreateTime);
+        return projectMapper.selectList(wrapper);
     }
 
-    private void appendDemoProject(List<Project> projects) {
+    /**
+     * 构造可见范围查询条件：演示项目 OR 自己的个人项目 OR 所属团队项目。
+     * 无登录上下文（userId 为 null）时仅返回演示项目。
+     */
+    private LambdaQueryWrapper<Project> buildAccessibleWrapper(Long userId) {
+        LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
         Long demoProjectId = getDemoProjectId();
-        if (demoProjectId == null) {
-            return;
+        if (userId == null) {
+            return demoProjectId == null
+                    ? wrapper.eq(Project::getId, -1L)
+                    : wrapper.eq(Project::getId, demoProjectId);
         }
-        boolean alreadyIncluded = projects.stream().anyMatch(project -> demoProjectId.equals(project.getId()));
-        if (alreadyIncluded) {
-            return;
-        }
-        Project demoProject = projectMapper.selectById(demoProjectId);
-        if (demoProject != null) {
-            projects.add(demoProject);
-        }
+        Long currentTeamId = teamService.getCurrentTeamIdByUser(userId);
+        wrapper.and(w -> {
+            if (demoProjectId != null) {
+                w.eq(Project::getId, demoProjectId).or();
+            }
+            w.eq(Project::getOwnerType, OWNER_TYPE_PERSONAL).eq(Project::getOwnerId, userId);
+            if (currentTeamId != null) {
+                w.or().eq(Project::getOwnerType, OWNER_TYPE_TEAM).eq(Project::getOwnerId, currentTeamId);
+            }
+        });
+        return wrapper;
     }
 
     public Long getDemoProjectId() {
@@ -148,29 +155,40 @@ public class ProjectService {
         return canAccessProject(getById(projectId), userId);
     }
 
+    /**
+     * 判断用户能否访问项目：演示项目（所有人可见） / 自己的个人项目 / 项目成员 / 所属团队项目。
+     * <p>
+     * 修复：此前末尾会将「同团队其他成员的个人项目」判为可访问。单团队架构下
+     * 所有用户同属一个默认团队，这等于所有人可互看彼此的私有项目。
+     */
     public boolean canAccessProject(Project project, Long userId) {
-        if (project == null) {
+        if (project == null || userId == null) {
             return false;
         }
         Long demoProjectId = getDemoProjectId();
         if (demoProjectId != null && demoProjectId.equals(project.getId())) {
             return true;
         }
-        if (OWNER_TYPE_PERSONAL == project.getOwnerType() && userId.equals(project.getOwnerId())) {
+        if (Integer.valueOf(OWNER_TYPE_PERSONAL).equals(project.getOwnerType())
+                && userId.equals(project.getOwnerId())) {
             return true;
         }
         if (isMember(project.getId(), userId)) {
             return true;
         }
         Long currentTeamId = teamService.getCurrentTeamIdByUser(userId);
-        if (currentTeamId == null) {
-            return false;
+        return currentTeamId != null
+                && Integer.valueOf(OWNER_TYPE_TEAM).equals(project.getOwnerType())
+                && currentTeamId.equals(project.getOwnerId());
+    }
+
+    /**
+     * 归属断言：无访问权限时抛 403，供 Controller 在读写项目前统一校验。
+     */
+    public void assertAccessible(Long projectId, Long userId) {
+        if (!canAccessProject(projectId, userId)) {
+            throw new BusinessException(403, "无权访问该项目");
         }
-        if (OWNER_TYPE_TEAM == project.getOwnerType() && currentTeamId.equals(project.getOwnerId())) {
-            return true;
-        }
-        return OWNER_TYPE_PERSONAL == project.getOwnerType()
-                && teamService.listMemberUserIds(currentTeamId).contains(project.getOwnerId());
     }
 
     public ProjectWorkspaceOverview getWorkspaceOverview(Long projectId) {
@@ -344,14 +362,19 @@ public class ProjectService {
         rejectDataUrl(project.getArtStyleImageUrl(), "artStyleImageUrl");
     }
 
+    /**
+     * 项目归属：一律归创建者个人。
+     * <p>
+     * 修复：此前跟随团队归属（ownerType=团队）。单团队架构下所有用户同属一个默认团队，
+     * 导致任何人新建的项目对该团队内所有用户可见。
+     */
     private void applyCurrentTeamOwnership(Project project) {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         if (currentUserId == null) {
             return;
         }
-        TeamService.OwnerScope ownerScope = teamService.getRequiredCurrentOwnerScopeByUser(currentUserId);
-        project.setOwnerType(ownerScope.getOwnerType());
-        project.setOwnerId(ownerScope.getOwnerId());
+        project.setOwnerType(OWNER_TYPE_PERSONAL);
+        project.setOwnerId(currentUserId);
     }
 
     private Project lockProject(Long projectId) {

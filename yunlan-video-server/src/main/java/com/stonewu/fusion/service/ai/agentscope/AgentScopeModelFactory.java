@@ -3,6 +3,7 @@ package com.stonewu.fusion.service.ai.agentscope;
 import com.stonewu.fusion.entity.ai.AiModel;
 import com.stonewu.fusion.service.ai.agentscope.kernel.AgentKernelModelFactory;
 import com.stonewu.fusion.service.ai.agentscope.kernel.AgentKernelSpec;
+import com.stonewu.fusion.service.ai.agentscope.kernel.AgentKernelSpecFactory;
 import com.stonewu.fusion.service.ai.agentscope.kernel.OwnedChatModel;
 import com.stonewu.fusion.service.ai.provider.AiProviderService;
 import com.stonewu.fusion.service.ai.provider.AiProviderService.AgentScopeModelProvision;
@@ -17,7 +18,8 @@ public final class AgentScopeModelFactory implements AgentKernelModelFactory {
 
     @Override
     public OwnedChatModel create(AgentKernelSpec spec) {
-        AgentScopeModelProvision provision = aiProviderService.provisionAgentScopeModel(spec.model());
+        Long ownerUserId = AgentKernelSpecFactory.ownerUserId(spec);
+        AgentScopeModelProvision provision = aiProviderService.provisionAgentScopeModel(spec.model(), ownerUserId);
         OwnedChatModel ownedModel = OwnedChatModel.owned(provision.model());
         if (spec.key().modelConfigFingerprint().equals(provision.modelConfigFingerprint())) {
             return ownedModel;
@@ -34,5 +36,9 @@ public final class AgentScopeModelFactory implements AgentKernelModelFactory {
 
     public String modelConfigFingerprint(AiModel model) {
         return aiProviderService.agentScopeModelFingerprint(model);
+    }
+
+    public String modelConfigFingerprint(AiModel model, Long userId) {
+        return aiProviderService.agentScopeModelFingerprint(model, userId);
     }
 }

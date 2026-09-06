@@ -9,6 +9,7 @@ import com.stonewu.fusion.entity.ai.ApiConfig;
 import com.stonewu.fusion.entity.generation.VideoItem;
 import com.stonewu.fusion.entity.generation.VideoTask;
 import com.stonewu.fusion.infrastructure.queue.RedisTaskQueue;
+import com.stonewu.fusion.security.GenerationContext;
 import com.stonewu.fusion.service.ai.AiModelService;
 import com.stonewu.fusion.service.ai.ApiConfigService;
 import com.stonewu.fusion.service.ai.comfyui.ComfyUiWorkflowService;
@@ -234,6 +235,9 @@ public class VideoGenerationConsumer {
             return;
         }
 
+        // 绑定任务归属用户到线程上下文：异步线程无登录态，Strategy 据此解析「用户自带密钥」
+        GenerationContext.setUserId(task.getUserId());
+
         refreshQueueMaxConcurrent(queueName, task.getModelId());
         videoGenerationService.updateStatus(task.getId(), 1, null);
 
@@ -254,7 +258,7 @@ public class VideoGenerationConsumer {
             VideoGenerationStrategy strategy = videoGenerationStrategyRouter.resolve(model);
             generationModelCapabilityService.validateVideoTask(model, task);
             ApiConfig apiConfig = model.getApiConfigId() == null
-                    ? null : apiConfigService.getById(model.getApiConfigId());
+                    ? null : apiConfigService.resolveForGeneration(model, task.getUserId());
             resolveReferenceImageInputs(model, task, apiConfig);
             String platformTaskId = strategy.submit(task);
             log.info("[VideoConsumer] 任务已提交到平台: taskId={}, platformTaskId={}", taskId, platformTaskId);
@@ -269,6 +273,8 @@ public class VideoGenerationConsumer {
         } catch (Exception e) {
             log.error("[VideoConsumer] 任务执行失败: taskId={}", taskId, e);
             videoGenerationService.updateStatus(task.getId(), 3, e.getMessage());
+        } finally {
+            GenerationContext.clear();
         }
     }
 

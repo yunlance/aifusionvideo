@@ -72,6 +72,12 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "登录")
     public CommonResult<LoginRespVO> login(@Valid @RequestBody LoginReqVO reqVO) {
+        // 账号不存在时给出明确提示。
+        // 若不先判断，UsernameNotFoundException 会被 Spring Security 包装成
+        // BadCredentialsException，最终统一显示"用户名或密码错误"，用户无法区分是账号输错还是密码输错。
+        if (userService.getByUsername(reqVO.getUsername()) == null) {
+            throw new BusinessException(401, "账号不存在");
+        }
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(reqVO.getUsername(), reqVO.getPassword()));
         SecurityUserDetails userDetails = (SecurityUserDetails) authentication.getPrincipal();

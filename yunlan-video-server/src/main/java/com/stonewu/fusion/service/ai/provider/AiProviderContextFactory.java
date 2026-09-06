@@ -8,6 +8,7 @@ import com.stonewu.fusion.entity.ai.ApiConfig;
 import com.stonewu.fusion.service.ai.ApiConfigService;
 import com.stonewu.fusion.service.ai.model.AiModelMetadata;
 import com.stonewu.fusion.service.ai.model.AiModelMetadataResolver;
+import com.stonewu.fusion.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,10 +27,20 @@ public class AiProviderContextFactory {
     private final AiModelMetadataResolver aiModelMetadataResolver;
 
     public AiProviderContext createForModel(AiModel model) {
+        return createForModel(model, SecurityUtils.getCurrentUserId());
+    }
+
+    /**
+     * 按使用方用户构建上下文：该用户在「我的密钥」中配置过密钥则使用他自己的，
+     * 否则按开关回退到后台全局渠道（规则见 ApiConfigService#resolveForGeneration）。
+     *
+     * @param userId 使用方用户ID；为 null（如无登录上下文的异步任务）时沿用模型绑定的渠道
+     */
+    public AiProviderContext createForModel(AiModel model, Long userId) {
         if (model == null) {
             throw new BusinessException("AI 模型不存在");
         }
-        ApiConfig apiConfig = resolveApiConfig(model.getApiConfigId());
+        ApiConfig apiConfig = resolveApiConfig(model, userId);
         Map<String, Object> config = parseConfig(model.getConfig(), model.getId());
         AiModelMetadata metadata = aiModelMetadataResolver.resolve(model, apiConfig);
         String requestProtocol = metadata.modelProtocol();
@@ -67,11 +78,25 @@ public class AiProviderContextFactory {
                 .build();
     }
 
-    private ApiConfig resolveApiConfig(Long apiConfigId) {
-        if (apiConfigId == null) {
+    /**
+     * 解析模型实际生效的渠道。
+     * <p>
+     * 修复：此前直接读取模型绑定的渠道配置，导致用户在「我的密钥」中配置的密钥
+     * 在对话 / AgentScope 链路（AI 生成分镜、AI 剧本等）上完全不生效，一律走全局密钥。
+     * 现在优先走 {@link ApiConfigService#resolveForGeneration}（全局模式用后台密钥，
+     * 非全局模式用当前用户密钥），解析不到有效密钥时回退模型绑定的原始渠道，保持向后兼容。
+     */
+    private ApiConfig resolveApiConfig(AiModel model, Long userId) {
+        if (model.getApiConfigId() == null) {
             throw new BusinessException("AI 模型未绑定 API 配置");
         }
-        ApiConfig apiConfig = apiConfigService.getById(apiConfigId);
+        if (userId != null) {
+            ApiConfig resolved = apiConfigService.resolveForGeneration(model, userId);
+            if (resolved != null && StrUtil.isNotBlank(resolved.getApiKey())) {
+                return resolved;
+            }
+        }
+        ApiConfig apiConfig = apiConfigService.getById(model.getApiConfigId());
         if (apiConfig == null) {
             throw new BusinessException(404, "API 配置不存在");
         }

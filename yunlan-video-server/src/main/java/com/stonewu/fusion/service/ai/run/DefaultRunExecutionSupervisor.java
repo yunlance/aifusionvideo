@@ -37,6 +37,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.List;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
@@ -378,10 +379,8 @@ public final class DefaultRunExecutionSupervisor implements RunExecutionSupervis
                     execution,
                     AgentRuntimeErrorCode.AGENT_EVENT_BACKPRESSURE_OVERFLOW,
                     "Agent event ingress exceeded its bounded capacity");
-            case SOURCE_FAILURE -> terminalFailure(
-                    execution,
-                    AgentRuntimeErrorCode.AGENTSCOPE_INTERNAL_ERROR,
-                    outcome.failure().getMessage());
+            case SOURCE_FAILURE -> terminalSourceFailure(
+                    execution, outcome.failure());
             case JOURNAL_FAILURE -> outcome.failure() instanceof OwnerLostException
                     ? Mono.empty()
                     : terminalFailure(
@@ -592,6 +591,50 @@ public final class DefaultRunExecutionSupervisor implements RunExecutionSupervis
         return failure instanceof RunConfigUnavailableException
                 ? AgentRuntimeErrorCode.RUN_CONFIG_UNAVAILABLE
                 : AgentRuntimeErrorCode.AGENTSCOPE_INTERNAL_ERROR;
+    }
+
+    private static final String MODEL_AUTH_FAILURE_MESSAGE =
+            "API 密钥无效或已过期（上游返回 401 / Invalid token）。"
+            + "普通用户请到「我的密钥」重新设置有效密钥；"
+            + "管理员请到「AI 配置」检查渠道密钥。";
+
+    private Mono<Void> terminalSourceFailure(
+            AgentExecution execution, Throwable failure) {
+        if (isModelAuthFailure(failure)) {
+            return terminalFailure(
+                    execution,
+                    AgentRuntimeErrorCode.MODEL_AUTH_FAILED,
+                    MODEL_AUTH_FAILURE_MESSAGE);
+        }
+        return terminalFailure(
+                execution,
+                AgentRuntimeErrorCode.AGENTSCOPE_INTERNAL_ERROR,
+                failure.getMessage());
+    }
+
+    private boolean isModelAuthFailure(Throwable failure) {
+        Throwable current = failure;
+        int depth = 0;
+        while (current != null && depth < 16) {
+            String message = current.getMessage();
+            if (message != null) {
+                String lower = message.toLowerCase(Locale.ROOT);
+                if (lower.contains("invalid token")
+                        || lower.contains("invalid api key")
+                        || lower.contains("incorrect api key")
+                        || lower.contains("unauthorized")
+                        || lower.contains("authentication")
+                        || lower.contains("invalid x-api-key")
+                        || lower.contains("api key not")
+                        || lower.contains("not authorized")
+                        || lower.contains("401")) {
+                    return true;
+                }
+            }
+            current = current.getCause();
+            depth++;
+        }
+        return false;
     }
 
     private String sanitizeMessage(String message) {

@@ -9,6 +9,7 @@ import com.stonewu.fusion.entity.ai.ApiConfig;
 import com.stonewu.fusion.entity.generation.ImageItem;
 import com.stonewu.fusion.entity.generation.ImageTask;
 import com.stonewu.fusion.infrastructure.queue.RedisTaskQueue;
+import com.stonewu.fusion.security.GenerationContext;
 import com.stonewu.fusion.service.ai.AiModelService;
 import com.stonewu.fusion.service.ai.ApiConfigService;
 import com.stonewu.fusion.service.ai.comfyui.ComfyUiWorkflowService;
@@ -154,7 +155,7 @@ public class ImageGenerationConsumer {
         }
         AiModel model = aiModelService.getById(task.getModelId());
         ApiConfig apiConfig = model == null || model.getApiConfigId() == null
-                ? null : apiConfigService.getById(model.getApiConfigId());
+                ? null : apiConfigService.resolveForGeneration(model, userId);
         if (model == null || apiConfig == null) {
             throw new BusinessException("图片任务缺少模型或 API 配置，无法取消");
         }
@@ -228,7 +229,16 @@ public class ImageGenerationConsumer {
             log.error("[ImageConsumer] 任务不存在: taskId={}", taskId);
             return;
         }
+        // 绑定任务归属用户到线程上下文：异步线程无登录态，用于解析「用户自带密钥」
+        GenerationContext.setUserId(task.getUserId());
+        try {
+            processTaskInternal(queueName, taskId, task);
+        } finally {
+            GenerationContext.clear();
+        }
+    }
 
+    private void processTaskInternal(String queueName, String taskId, ImageTask task) {
         refreshQueueMaxConcurrent(queueName, task.getModelId());
 
         // 更新状态为处理中
@@ -242,7 +252,7 @@ public class ImageGenerationConsumer {
                 model = aiModelService.getById(task.getModelId());
                 if (model != null) {
                     if (model.getApiConfigId() != null) {
-                        apiConfig = apiConfigService.getById(model.getApiConfigId());
+                        apiConfig = apiConfigService.resolveForGeneration(model, task.getUserId());
                     }
                 }
             } catch (Exception e) {
