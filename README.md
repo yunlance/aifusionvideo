@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/ui/banner-design.png" alt="云揽镜 紫蓝配色设计" width="920" />
+  <img src="https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/banner-design.png" alt="云揽镜 紫蓝配色设计" width="920" />
 </p>
 
 <p align="center">
@@ -62,21 +62,21 @@ Agent 运行基于 AgentScope，支持 Skill、MCP 和子 Agent。会话与运�
 
 ## 界面演示
 
-![登录](assets/ui/login.png)
+![登录](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/login.png)
 
-![仪表盘](assets/ui/dashboard.png)
+![仪表盘](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/dashboard.png)
 
-![数据统计](assets/ui/analytics.png)
+![数据统计](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/analytics.png)
 
-![项目列表](assets/ui/projects.png)
+![项目列表](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/projects.png)
 
-![项目详情](assets/ui/projects1.png)
+![项目详情](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/projects1.png)
 
-![项目设置](assets/ui/projects-settings.png)
+![项目设置](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/projects-settings.png)
 
-![生成](assets/ui/generate1.png)
+![生成](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/generate1.png)
 
-![Agent 工作区](assets/ui/agents.png)
+![Agent 工作区](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/agents.png)
 
 ## 技术栈
 

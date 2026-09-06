@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/ui/banner-design.png" alt="AI Fusion Video Banner" width="920" />
+  <img src="https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/banner-design.png" alt="AI Fusion Video Banner" width="920" />
 </p>
 
 <p align="center">
@@ -62,21 +62,21 @@ Media assets can be stored on local disk or in an S3-compatible object store. Ag
 
 ## UI demos
 
-![Login](assets/ui/login.png)
+![Login](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/login.png)
 
-![Dashboard](assets/ui/dashboard.png)
+![Dashboard](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/dashboard.png)
 
-![Analytics](assets/ui/analytics.png)
+![Analytics](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/analytics.png)
 
-![Projects](assets/ui/projects.png)
+![Projects](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/projects.png)
 
-![Project detail](assets/ui/projects1.png)
+![Project detail](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/projects1.png)
 
-![Project settings](assets/ui/projects-settings.png)
+![Project settings](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/projects-settings.png)
 
-![Generation](assets/ui/generate1.png)
+![Generation](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/generate1.png)
 
-![Agent workspace](assets/ui/agents.png)
+![Agent workspace](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/agents.png)
 
 ## Tech stack
 
