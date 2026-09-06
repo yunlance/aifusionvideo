@@ -47,6 +47,8 @@ jobs:
           context: ./yunlan-video-server
           platforms: linux/amd64
           push: true
+          provenance: false
+          sbom: false
           tags: |
             ghcr.io/${{ github.repository_owner }}/aifusionvideo-server:${{ steps.version.outputs.VERSION }}
             ghcr.io/${{ github.repository_owner }}/aifusionvideo-server:latest
@@ -62,6 +64,8 @@ jobs:
           context: ./yunlan-video-webui
           platforms: linux/amd64
           push: true
+          provenance: false
+          sbom: false
           tags: |
             ghcr.io/${{ github.repository_owner }}/aifusionvideo-webui:${{ steps.version.outputs.VERSION }}
             ghcr.io/${{ github.repository_owner }}/aifusionvideo-webui:latest
