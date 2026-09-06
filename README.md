@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/logo.png" alt="Yunlan Mirror" width="180" />
+</p>
+
+<p align="center">
   <img src="https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/banner-design.png" alt="云揽镜 紫蓝配色设计" width="920" />
 </p>
 
