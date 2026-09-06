@@ -32,6 +32,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 阿里云 ACR（国内镜像源），需要在仓库 Secrets 配置 ACR_USERNAME / ACR_PASSWORD
+      - name: Login to Aliyun ACR
+        uses: docker/login-action@v3
+        with:
+          registry: crpi-auejvz24x1ul29s8.cn-guangzhou.personal.cr.aliyuncs.com
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
       # ---------- 后端 ----------
       - name: Build and push backend
         uses: docker/build-push-action@v6
@@ -42,6 +50,8 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/aifusionvideo-server:${{ steps.version.outputs.VERSION }}
             ghcr.io/${{ github.repository_owner }}/aifusionvideo-server:latest
+            crpi-auejvz24x1ul29s8.cn-guangzhou.personal.cr.aliyuncs.com/yunlance/aifusionvideo-server:${{ steps.version.outputs.VERSION }}
+            crpi-auejvz24x1ul29s8.cn-guangzhou.personal.cr.aliyuncs.com/yunlance/aifusionvideo-server:latest
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
 
@@ -55,5 +65,7 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/aifusionvideo-webui:${{ steps.version.outputs.VERSION }}
             ghcr.io/${{ github.repository_owner }}/aifusionvideo-webui:latest
+            crpi-auejvz24x1ul29s8.cn-guangzhou.personal.cr.aliyuncs.com/yunlance/aifusionvideo-webui:${{ steps.version.outputs.VERSION }}
+            crpi-auejvz24x1ul29s8.cn-guangzhou.personal.cr.aliyuncs.com/yunlance/aifusionvideo-webui:latest
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend

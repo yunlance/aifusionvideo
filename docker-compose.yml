@@ -45,7 +45,8 @@ services:
 
   # ---------- 后端 ----------
   backend:
-    image: ghcr.io/yunlance/aifusionvideo-server:latest
+    # 默认从 ghcr.io 拉取；国内用户可在 .env 设置 IMAGE_REGISTRY 切换到阿里云 ACR
+    image: ${IMAGE_REGISTRY:-ghcr.io/yunlance}/aifusionvideo-server:${IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -78,7 +79,8 @@ services:
 
   # ---------- 前端 ----------
   frontend:
-    image: ghcr.io/yunlance/aifusionvideo-webui:latest
+    # 默认从 ghcr.io 拉取；国内用户可在 .env 设置 IMAGE_REGISTRY 切换到阿里云 ACR
+    image: ${IMAGE_REGISTRY:-ghcr.io/yunlance}/aifusionvideo-webui:${IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       # 留空表示由统一入口提供同源 /api；分域部署由覆盖文件传入完整地址。
