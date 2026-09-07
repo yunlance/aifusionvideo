@@ -1,6 +1,6 @@
-<p align="center">
+<!-- <p align="center">
   <img src="https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/logo.png" alt="Yunlan Mirror" width="180" />
-</p>
+</p> -->
 
 <p align="center">
   <img src="https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/banner-design.png" alt="AI Fusion Video Banner" width="920" />
@@ -106,21 +106,21 @@ Media assets can be stored on local disk or in an S3-compatible object store. Ag
 
 ## UI demos
 
-![Login](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/login.png)
+![Login](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/a-login.png)
 
-![Dashboard](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/dashboard.png)
+![Dashboard](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/b-dashboard.png)
 
-![Analytics](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/analytics.png)
+![Analytics](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/c-analytics.png)
 
-![Projects](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/projects.png)
+![Projects](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/d1-projects.png)
 
-![Project detail](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/projects1.png)
+![Project settings](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/d2-projects-settings.png)
 
-![Project settings](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/projects-settings.png)
+![Image generation](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/e1-projects1.png)
 
-![Generation](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/generate1.png)
+![Video generation](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/e2-projects2.png)
 
-![Agent workspace](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/agents.png)
+![Agent configuration](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/f-agents.png)
 
 ## Tech stack
 

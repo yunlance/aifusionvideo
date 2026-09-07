@@ -1,6 +1,6 @@
-<p align="center">
+<!-- <p align="center">
   <img src="https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/logo.png" alt="Yunlan Mirror" width="180" />
-</p>
+</p> -->
 
 <p align="center">
   <img src="https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/banner-design.png" alt="云揽镜 紫蓝配色设计" width="920" />
@@ -106,21 +106,21 @@ Agent 运行基于 AgentScope，支持 Skill、MCP 和子 Agent。会话与运�
 
 ## 界面演示
 
-![登录](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/login.png)
+![登录](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/a-login.png)
 
-![仪表盘](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/dashboard.png)
+![总览](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/b-dashboard.png)
 
-![数据统计](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/analytics.png)
+![数据分析](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/c-analytics.png)
 
-![项目列表](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/projects.png)
+![项目列表](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/d1-projects.png)
 
-![项目详情](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/projects1.png)
+![项目设置](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/d2-projects-settings.png)
 
-![项目设置](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/projects-settings.png)
+![生图](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/e1-projects1.png)
 
-![生成](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/generate1.png)
+![生视频](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/e2-projects2.png)
 
-![Agent 工作区](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/agents.png)
+![智能体配置](https://cdn.jsdelivr.net/gh/yunlance/aifusionvideo@master/assets/ui/f-agents.png)
 
 ## 技术栈
 
