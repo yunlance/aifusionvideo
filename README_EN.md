@@ -31,7 +31,11 @@
 
 <hr/>
 
-AI Fusion Video is an Agent-driven platform for video creators. It brings projects, scripts, storyboards, assets, and image and video generation into one workspace. Creators can organize scripts by episode and scene, break them down into storyboards, refine individual shots, and generate and manage the assets needed for production.
+AI Fusion Video is an Agent-driven platform that puts the entire path **from an idea to a finished cut** into a single workspace:
+
+**Concept → Script (episodes / scenes) → Assets and reference images → Storyboards and shots → AI images → AI video → Episode composition → Final cut**
+
+It does more than wire a few AI models into a UI. It connects them with a structured, film-industry-like workflow: scripts are organized by episode and scene, shots carry shot size, camera movement, angle, and focal length, each shot can define first and last frames plus transitions, and the final cut is assembled automatically in shot order. You can polish every cell by hand, or hand the repetitive work to an Agent and run the whole pipeline — from script breakdown to shot generation — inside a single conversation.
 
 This repository includes a Java backend, a Next.js frontend, and Docker Compose deployment files. After deployment, open the site and sign in as `admin`. Cloud models use the built-in Yunlan Chuan gateway, with local ComfyUI as an optional generation channel.
 
@@ -39,14 +43,50 @@ This repository includes a Java backend, a Next.js frontend, and Docker Compose 
 
 | Area | What you can do |
 | --- | --- |
-| Projects and teams | Manage creative projects, project members, and collaboration roles |
-| Script writing | Organize scripts by episode and scene, and provide project context to an Agent |
-| Storyboarding | Build storyboards from scripts and edit shot content, reference assets, and generation results |
-| Image and video generation | Generate images and video from text or reference assets while tracking background job progress |
-| Asset management | Organize project assets and reusable image and video resources |
+| Projects and teams | Manage creative projects, members, and collaboration roles; one project holds an entire work |
+| Script writing | Organize scripts by episode and scene, maintain story structure, and give the Agent project context |
+| Asset management | Maintain reusable characters, locations, and props with reference images for cross-shot consistency |
+| Storyboarding | Build storyboards from scripts and edit each shot's visuals, shot size, camera movement, dialogue, sound, and results |
+| Image generation | Generate frames from shot descriptions and reference images, with text-to-image, image-to-image, and first/last frame control |
+| Video generation | Turn frames or first/last frames into shot clips, keeping the generation prompts reusable |
+| Episode composition | Concatenate every shot video of an episode in shot order into a cut, preferring zero-transcode with automatic re-encode fallback |
+| Jobs and progress | Queue and track background generation jobs with live queued, running, and completed status |
 | Agent workspace | Use streaming chat, multimodal context, tool permissions, Skills, MCP, and sub-Agents |
 | Models and storage | Enter a Yunlan Chuan API key in Settings, or connect a local ComfyUI workflow; media can use local disk or object storage |
 | System administration | Manage users and roles, reset passwords, and check for updates |
+
+### The full workflow: from an idea to a finished cut
+
+1. **Concept** — Create a project, set the genre, tone, and collaborators. Everything that follows lives under this project.
+2. **Script** — Organize the script as episodes and scenes. Write it yourself, or let the Agent draft and refine it from your idea.
+3. **Assets** — Register characters, locations, and props, then generate or upload reference images. Shots reference these assets, which is what keeps a character or location consistent across shots.
+4. **Storyboard** — Turn the script into a storyboard (the Agent can break the script down in one click, or you can add shots manually), producing a full episode → scene → shot structure.
+5. **Shots** — Refine each shot: shot size, camera movement, angle, focal length, estimated duration, visual description, dialogue, sound effects, music, and transition.
+6. **Frames** — Generate images from the shot description and references, including first-frame and last-frame images and their prompts. Rerun a single cell whenever a result misses.
+7. **Clips** — Turn frames or first/last frames into shot clips. Prompts are stored on the shot so they can be reused and fine-tuned.
+8. **Cut** — Pick an episode and the system gathers every shot clip in shot order and joins them with FFmpeg, preferring zero-transcode and falling back to re-encoding when codecs differ.
+
+Every step can be driven manually or delegated to the Agent, and you can always roll back: edit a shot, regenerate it, and recompose the cut.
+
+### How detailed can a shot get?
+
+| Dimension | What you can define |
+| --- | --- |
+| Visuals | Shot content description and scene expectation (used to steer image generation) |
+| Camera language | Shot size (wide / full / medium / close-up / extreme close-up), movement (push / pull / pan / tilt / follow / crane), angle (eye level / high / low), focal length, camera equipment |
+| Timing | Estimated duration in seconds, transition (cut / fade in / fade out / dissolve / wipe) |
+| Sound | Dialogue and narration, sound effects, music notes, overall sound description |
+| Generation control | Reference images, external reference URLs, first-frame image and prompt, last-frame image and prompt, generated image, generated video and its prompt |
+| Asset links | Appearing characters, the location, and props used (referencing entries in the asset library) |
+| Collaboration | Automatic and manual shot numbers, ordering, remarks, custom fields, AI-generated flag, draft status |
+
+### Why AI Fusion Video
+
+- **One pipeline, not a pile of tools** — Script, storyboard, shots, generation, and composition are connected end to end, so assets never have to be shuffled between platforms.
+- **Control down to the shot** — Not "type a sentence, get a video". Shot size, camera movement, dialogue, and transitions can all be edited per shot and regenerated individually.
+- **Consistency through reusable assets** — Characters, locations, and props become assets that shots reference, so the same character does not look different in every frame.
+- **Let the Agent do the repetitive work** — From breaking a script into shots to batch-generating them, all of it can be delegated in chat, with reasoning and tool calls visible as they happen.
+- **Swappable models and storage** — Cloud calls run through the Yunlan Chuan gateway, or connect a local ComfyUI workflow; media can live on local disk or in S3-compatible object storage.
 
 ### Agents and tools
 
